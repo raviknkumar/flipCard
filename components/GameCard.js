@@ -6,21 +6,25 @@ import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 export default class GameCard extends Component {
 
     cardClicked = () => {
-        console.log("Clicked Card");
+        console.log("Clicked Card", this.props.index);
         this.card.flip();
-        this.props.handleClick(this.props.index);
+        setTimeout(() => {this.props.handleClick(this.props.index)}, 0);
     };
 
-    componentWillReceiveProps(nextProps){
-        console.log("Next Props", nextProps);
-        if(nextProps.forceFlip === true){
+    callOther(){
+        this.props.handleClick(this.props.index)
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if(this.props.forceFlip){
+            console.log("Flipping  Card In CDUpdate", this.props.index);
             this.card.flip();
         }
     }
-    render() {
 
+    render() {
         return (
-            <CardFlip style={styles.cardContainer} ref={card => (this.card = card)}>
+            <CardFlip style={{...styles.cardContainer,marginHorizontal:3}} ref={card => (this.card = card)}>
 
                 <TouchableOpacity
                     disabled={!this.props.clickable}
@@ -37,8 +41,7 @@ export default class GameCard extends Component {
                 <TouchableOpacity
                     disabled={!this.props.clickable}
                     activeOpacity={1}
-                    style={[styles.card, styles.card2]}
-                    onPress={() => this.card.flip()}>
+                    style={[styles.card, styles.card2]}>
                     <View style={{flex:1, backgroundColor:'white', ...styles.back}}>
                         <View style={{backgroundColor:this.props.color, flex:1, margin:10}}>
                             <Text style={{textAlign: 'center'}}> </Text>
@@ -58,7 +61,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5FCFF',
     },
     cardContainer: {
-        flex:1,
+        flex:.5,
     },
     card: {
         flex:1,
