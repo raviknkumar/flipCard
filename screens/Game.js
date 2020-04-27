@@ -1,96 +1,121 @@
 import React, { Component } from 'react';
 import {StyleSheet, View, FlatList, Alert, TouchableOpacity} from 'react-native'
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Text ,
-    Card, CardItem, Grid, Row, Col} from 'native-base';
+import { Container, Header, Button, Left, Right, Body, Icon, Text , Grid, Row} from 'native-base';
 import GameCard from "../components/GameCard";
 import _ from 'underscore'
 
+const CARD_REPEAT_FREQUENCY = 2; // Should be even only
+
 export default class Game extends Component {
 
+    static shuffle(array) {
 
-     static shuffle(array) {
-
-         for (let i = array.length - 1; i > 0; i--) {
-             const j = Math.floor(Math.random() * i);
-             const temp = array[i];
-             array[i] = array[j];
-             array[j] = temp
-         }
-         return array;
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * i);
+            const temp = array[i];
+            array[i] = array[j];
+            array[j] = temp
+        }
+        return array;
     }
 
     constructor (props) {
         super(props);
-        this.state = {
-            colors: ['red', 'blue', 'yellow', 'green', 'pink', 'orange', 'violet', 'magenta'],
-            colorsToUse:[],
-            colorsToApply:[],
-            gridSize:0,
-            previousCard: -1,
-            currentCard:-1,
-            numClicks: 0,
-            cardInfo:[],
-            successAttempts:0,
-            failureAttempts:0,
-            remainingCards:0,
-        }
+        this.initializeCardInformation();
     }
 
-    componentWillMount() {
+    initializeCardInfo(cardValuesToApply2d){
 
-        console.log("COmpoment Will Mount");
-        let gridSize = this.props.totalRows;
-        let colorsToUse = this.state.colors.slice(0,this.props.totalRows);
-        let colorsToApply = [];
+        let cardInfo = [], i=0;
 
-        for(let i=0; i< gridSize; i++){
-            colorsToApply = [...colorsToApply, ...colorsToUse];
-        }
-
-        colorsToApply = _.shuffle(_.shuffle(colorsToApply));
-        console.log("Colors To Use", colorsToApply);
-
-        let colorsToApply2d = [];
-        while(colorsToApply.length) colorsToApply2d.push(colorsToApply.splice(0,this.props.totalRows));
-
-        // console.log("2d Array:",colorsToApply2d);
-
-        let i = 0;
-        let colorInfo2d = [];
-        let cardInfoFlatList = [];
-        for (const colorsToApply2dElement of colorsToApply2d) {
-            let colorInfo = [];
-            for(const colorInformation of colorsToApply2dElement){
+        for (const cardValuesRow of cardValuesToApply2d) {
+            let cardValuesInfo = [];
+            for(const colorInformation of cardValuesRow){
                 let colorInfoObj = {
                     index:i,
                     clickable: true,
                     forceFlip: false,
-                    color: colorInformation,
+                    id: colorInformation.id,
+                    color: colorInformation.prop,
                     visible: true
                 };
-
-                colorInfo.push(colorInfoObj);
+                cardValuesInfo.push(colorInfoObj);
                 i++;
-                cardInfoFlatList.push(colorInfoObj);
             }
-            colorInfo2d.push(colorInfo);
+            cardInfo.push(cardValuesInfo);
         }
-        this.setState({cardInfo: colorInfo2d,
-                gridSize:this.props.totalRows,
-                cardInfoFlatList: [...cardInfoFlatList],
-                colorsToApply2d:colorsToApply2d,
-                colorsToApply:colorsToApply,
-                remainingCards: this.props.totalRows * this.props.totalRows
-            },
-            console.log("Color Object After Setting", this.state.gridSize));
+        return cardInfo;
+    }
 
+    // Using instead of component will mount
+    initializeCardInformation() {
+
+        console.log("Compoment Will Mount");
+        let rowSize = this.props.totalRows;
+        let colSize = this.props.totalColumns;
+        let totalCards = rowSize * colSize;
+
+        let cardValues = [
+                {id:1, prop:'red'},
+                {id:2, prop:'blue'},
+                {id:3, prop:'yellow'},
+                {id:4, prop:'green'},
+                {id:5, prop:'silver'},
+                {id:6, prop:'orange'},
+                {id:7, prop:'violet'},
+                {id:8, prop:'magenta'},
+                {id:9, prop:'aqua'},
+                {id:10, prop:'black'},
+                ];
+
+        let cardValuesToUse = cardValues.slice(0,~~(totalCards / CARD_REPEAT_FREQUENCY));
+
+        let cardValuesToApply = [];
+        // Every Card is repeated twice, so loop twice
+        for(let i=0; i< CARD_REPEAT_FREQUENCY; i++){
+            cardValuesToApply = [...cardValuesToApply, ...cardValuesToUse];
+        }
+
+        cardValuesToApply = _.shuffle(_.shuffle(cardValuesToApply));
+
+        let cardValuesToApply2d = [];
+        let k = 0;
+        for(let i=0; i< rowSize ; i++){
+            let cardValue1d = [];
+            for(let j=0; j< colSize; j++){
+                cardValue1d.push(cardValuesToApply[k++])
+            }
+            cardValuesToApply2d.push(cardValue1d);
+        }
+
+        let cardInfo = this.initializeCardInfo(cardValuesToApply2d);
+
+        this.state = {
+            cardValues: cardValues,
+            cardInfo:cardInfo,
+            totalRows:rowSize,
+            totalColumns:colSize,
+            previousCardIndex: -1,
+            currentCardIndex:-1,
+            totalAttempts: 0,
+            successAttempts:0,
+            failureAttempts:0,
+            remainingCards:rowSize * colSize,
+            cardValuesToApply2d:cardValuesToApply2d,
+            cardValuesToApply:cardValuesToApply,
+            totalCards: rowSize * colSize
+        };
+    }
+
+    printState(){
+        console.log("State Info", this.state)
     }
 
     handleClick = (index) =>{
-         console.log("Clicked Card ", index);
-         let numClicks = this.state.numClicks+1;
-         console.log("Updates Clickes ", numClicks);
-            this.updateCardSelected(index, numClicks);
+        console.log("Clicked Card ", index);
+        let numClicks = this.state.totalAttempts+1;
+        console.log("Updates Clickes ", numClicks);
+        this.updateCardSelected(index, numClicks);
     };
 
     makeForceFlipFalse(items){
@@ -102,47 +127,59 @@ export default class Game extends Component {
         return items;
     }
 
-    updateCardSelected = (index, totalClicks) => {
+    getElementIn2dArray(array2d, index1d, colSize){
+        return {...array2d[~~(index1d / colSize)][index1d % colSize]};
+    }
 
-        let gridSize = this.state.gridSize;
+    areCardsSame(card1, card2){
+        return card1.color === card2.color;
+    }
+
+    updateCardSelected = (currentCardIndex, totalClicks) => {
+
+        let colSize = this.state.totalColumns;
 
         let items = [...this.state.cardInfo];
         items = this.makeForceFlipFalse(items);
+        let rowClicked =  ~~(currentCardIndex / colSize);
+        let  colClicked = [currentCardIndex % colSize];
 
-        let rowClicked =  ~~(index / gridSize);
-        let  colClicked = [index % gridSize];
-        let clickedCard = {...items[rowClicked][colClicked]};
+        let clickedCard = this.getElementIn2dArray(this.state.cardInfo, currentCardIndex, colSize);
         let {remainingCards, successAttempts, failureAttempts}  = this.state;
         console.log("Destructured Props", remainingCards, successAttempts, failureAttempts);
 
-         if(totalClicks % 2 === 0){
+        if(totalClicks % 2 === 0){
 
-             let previousCard = this.state.previousCard;
-             console.log(previousCard, index);
+            let previousCardIndex = this.state.previousCardIndex;
+            console.log(previousCardIndex, currentCardIndex);
 
-             let prevCard = this.state.cardInfo[~~(previousCard / gridSize)][previousCard % gridSize];
-             let currCard = clickedCard;
-             console.log("Colors:", prevCard.color, currCard.color);
+            let prevCard = this.getElementIn2dArray(this.state.cardInfo, previousCardIndex, colSize);
+            let currCard = clickedCard;
+            console.log("Prev Card", prevCard, "Current Card", currCard);
+            console.log("Colors:", prevCard.color, currCard.color);
 
-             if(prevCard.color !== currCard.color){
-                 // close both curr and prev
-                 currCard.forceFlip = true;
-                 prevCard.forceFlip = true;
-                 failureAttempts += 2;
-             } else {
-                 currCard.visible = false;
-                 prevCard.visible = false;
-                 remainingCards -=2;
-                 successAttempts +=2;
-                 this.handleGameComplete(remainingCards);
-             }
-             items[rowClicked][colClicked] = {...currCard};
-             items[~~(previousCard / gridSize)][previousCard%gridSize] = {...prevCard};
-             this.setState({cardInfo: items, numClicks : totalClicks,
-                 remainingCards : remainingCards, successAttempts: successAttempts, failureAttempts: failureAttempts});
-         } else {
-             this.setState({cardInfo: items, previousCard: index, numClicks : totalClicks});
-         }
+            // Cards are not same, close both curr and prev
+            if(!this.areCardsSame(prevCard, currCard)){
+                currCard.forceFlip = true;
+                prevCard.forceFlip = true;
+                failureAttempts += 2;
+            }
+            // Cards are Same
+            else {
+                currCard.visible = false;
+                prevCard.visible = false;
+                remainingCards -=2;
+                successAttempts +=2;
+                this.handleGameComplete(remainingCards);
+            }
+
+            items[rowClicked][colClicked] = {...currCard};
+            items[~~(previousCardIndex / colSize)][previousCardIndex % colSize] = {...prevCard};
+            this.setState({cardInfo: items, totalAttempts : totalClicks,
+                remainingCards : remainingCards, successAttempts: successAttempts, failureAttempts: failureAttempts});
+        } else {
+            this.setState({cardInfo: items, previousCardIndex: currentCardIndex, totalAttempts : totalClicks});
+        }
     };
 
     handleGameComplete(remainingCards){
@@ -169,7 +206,7 @@ export default class Game extends Component {
                     <Right />
                 </Header>
 
-                <TouchableOpacity onPress={()=>{this.setState({numClicks:0})}}>
+                <TouchableOpacity onPress={()=>{this.setState({totalAttempts:0})}}>
                     <Text>Refresh</Text>
                 </TouchableOpacity>
 
@@ -184,11 +221,11 @@ export default class Game extends Component {
                                                 return(
                                                     <GameCard
                                                         key={cardInformation.index}
-                                                              index={cardInformation.index}
-                                                              color={cardInformation.color}
-                                                              clickable={cardInformation.clickable}
-                                                              forceFlip={cardInformation.forceFlip}
-                                                    handleClick={this.handleClick}/>
+                                                        index={cardInformation.index}
+                                                        color={cardInformation.color}
+                                                        clickable={cardInformation.clickable}
+                                                        forceFlip={cardInformation.forceFlip}
+                                                        handleClick={this.handleClick}/>
                                                 )
                                             })
                                         }
@@ -207,11 +244,3 @@ export default class Game extends Component {
 const styles = StyleSheet.create({
 
 });
-
-/*return(
-                                                    <View style={{flex:1, backgroundColor:'green'}}>
-                                                        <Card style={{flex:1}}>
-                                                            <Text style={{textAlign:'center'}}>Gello</Text>
-                                                        </Card>
-                                                    </View>
-                                                )*/

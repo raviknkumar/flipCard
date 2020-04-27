@@ -42,8 +42,8 @@ export default class GameCard extends Component {
                     disabled={!this.props.clickable}
                     activeOpacity={1}
                     style={[styles.card, styles.card2]}>
-                    <View style={{flex:1, backgroundColor:'white', ...styles.back}}>
-                        <View style={{backgroundColor:this.props.color, flex:1, margin:10}}>
+                    <View style={{flex:1, backgroundColor:'white', ...styles.back, borderColor:'#000', borderWidth:1}}>
+                        <View style={{backgroundColor:this.props.color, flex:1, margin:5}}>
                             <Text style={{textAlign: 'center'}}> </Text>
                         </View>
                     </View>
