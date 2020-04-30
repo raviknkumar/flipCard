@@ -28,4 +28,38 @@ export const globalStyles = StyleSheet.create({
     marginTop: 6,
     textAlign: 'center',
   },
+
+  buttonContainer:{
+    backgroundColor:'#86ACF8',
+    color:'white',
+    width:'90%',
+    justifyContent:'center',
+    borderWidth:2,
+    borderColor:'white',
+    height:80,
+    borderRadius:15,
+    marginHorizontal: 20,
+    marginVertical: 10,
+  },
+
+  buttonContainerFitToWidth:{
+    backgroundColor:'#86ACF8',
+    color:'white',
+    justifyContent:'center',
+    borderWidth:2,
+    borderColor:'white',
+    height:80,
+    borderRadius:15,
+    marginHorizontal: 20,
+    marginVertical: 10,
+  },
+
+  buttonText:{
+    textAlignVertical:'center',
+    textAlign:'center',
+    fontSize:24,
+    fontWeight: '200',
+    color:'white'
+  }
+
 });

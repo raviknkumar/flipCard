@@ -5,6 +5,7 @@ import About from '../screens/About';
 import {createAppContainer} from "react-navigation";
 import GameModes from "../screens/GameModes";
 import SelectedGame from "../screens/SelectedGame";
+import GameStats from "../screens/GameStats";
 
 const screens = {
     Home: {
@@ -15,6 +16,11 @@ const screens = {
         screen: GameModes
     }, SelectedGame :{
         screen: SelectedGame,
+        navigationOptions:{
+            headerShown:false
+        }
+    }, GameStats: {
+        screen: GameStats,
         navigationOptions:{
             headerShown:false
         }

@@ -1,4 +1,4 @@
-import React from "react"
+import React, {PureComponent} from "react"
 import styled from "styled-components"
 import { Animated, TouchableOpacity, Dimensions, View, Text, StyleSheet, TouchableHighlight, TouchableNativeFeedback} from "react-native"
 import {Card, CardItem, Button} from "native-base";
@@ -6,7 +6,7 @@ import * as Icon from "@expo/vector-icons"
 
 const screenHeight = Dimensions.get("window").height;
 
-class CustomModal extends React.Component {
+class CustomModal extends PureComponent {
 
     state = {
         top: new Animated.Value(screenHeight)
@@ -23,6 +23,11 @@ class CustomModal extends React.Component {
             toValue: screenHeight
         }).start();
     };
+
+    setLevelAndClose = (level) => {
+        this.props.setLevel(level);
+        this.closeModal()
+    }
 
     render() {
         return (
@@ -43,7 +48,7 @@ class CustomModal extends React.Component {
                 <Body>
 
                     <AnimatedTouchable
-                        onPress={()=>{this.props.setLevel(1);this.closeModal()}}>
+                        onPress={() => {this.setLevelAndClose(1)}}>
                         <Card style={{marginTop:10,borderRadius: 50, width: 100, height: 100}}>
                             <Text style={{textAlign: 'center', fontSize: 60, marginTop: 10}}> 1 </Text>
                         </Card>

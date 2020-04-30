@@ -1,10 +1,21 @@
 import React, {Component} from 'react';
-import {StyleSheet, View, Text, Alert, TouchableOpacity} from 'react-native';
+import {StyleSheet, View, Text, Alert, TouchableOpacity, Dimensions, Modal} from 'react-native';
 import {cardsInformation, levelInfo } from "../config/ResourceConfig";
 import _ from "underscore";
-import {Body, Button, Container, Grid, Header, Icon, Left, Right, Row} from "native-base";
-import GameCard from "../components/GameCard";
+import {NavigationActions, StackActions} from 'react-navigation';
+import {Body, Button, Container, Grid, Header, Icon, Left, Right, Row, Card, CardItem} from "native-base";
 import GameCardSelected from "../components/GameCardSelected";
+
+import {
+    Menu,
+    MenuProvider,
+    MenuOptions,
+    MenuOption,
+    MenuTrigger,
+} from 'react-native-popup-menu';
+
+const width = Dimensions.get('window').width;
+const height = Dimensions.get('window').height;
 
 const CARD_REPEAT_FREQUENCY = 2; // Should be even only
 
@@ -23,8 +34,14 @@ class SelectedGame extends Component
 
     constructor (props) {
         super(props);
-        this.initializeCardInformation();
+        this.state = {};
     };
+
+    UNSAFE_componentWillMount() {
+        this.initializeCardInformation();
+        this.startTimer();
+        //setTimeout(()=>{this.handleGameComplete(this.state.totalCards)}, 8000)
+    }
 
     initializeCardInfo(cardValuesToApply2d, faceUpImageUri){
 
@@ -36,7 +53,6 @@ class SelectedGame extends Component
                 let colorInfoObj = {
                     index:i,
                     clickable: true,
-                    forceFlip: false,
                     id: colorInformation.id,
                     color: colorInformation.prop,
                     visible: true,
@@ -52,7 +68,7 @@ class SelectedGame extends Component
 
     initializeCardInformation(){
 
-        let level = this.props.navigation.getParam('level')
+        let level = this.props.navigation.getParam('level');
         let category = this.props.navigation.getParam('category');
 
         console.log("Initialize Card Info");
@@ -71,7 +87,7 @@ class SelectedGame extends Component
             cardValuesToApply = [...cardValuesToApply, ...cardValuesToUse];
         }
 
-        cardValuesToApply = _.shuffle(_.shuffle(cardValuesToApply));
+        cardValuesToApply = _.shuffle(cardValuesToApply);
 
         let cardValuesToApply2d = [];
         let k = 0;
@@ -85,7 +101,7 @@ class SelectedGame extends Component
 
         let cardInfo = this.initializeCardInfo(cardValuesToApply2d, faceUpImageUri);
 
-        this.state = {
+        /*this.state = {
             level: level,
             category: category,
             cardValues: cardValues,
@@ -102,27 +118,65 @@ class SelectedGame extends Component
             cardValuesToApply:cardValuesToApply,
             totalCards: rowSize * colSize,
             matchedCards: 0,
-        };
+            prevTime:null,
+            time:null,
+            timeInMilliseconds:0,
+            timer: null,
+            restartGame: false,
+        };*/
+
+        this.setState({
+            level: level,
+            category: category,
+            cardValues: cardValues,
+            cardInfo:cardInfo,
+            totalRows:rowSize,
+            totalColumns:colSize,
+            previousCardIndex: -1,
+            currentCardIndex:-1,
+            totalAttempts: 0,
+            successAttempts:0,
+            failureAttempts:0,
+            remainingCards:rowSize * colSize,
+            cardValuesToApply2d:cardValuesToApply2d,
+            cardValuesToApply:cardValuesToApply,
+            totalCards: rowSize * colSize,
+            matchedCards: [],
+            prevTime:null,
+            time:null,
+            timeInMilliseconds:0,
+            timer: null,
+            restartGame: false,
+            isPaused: false,
+            resourcesLoaded: false,
+        });
     }
+
+    restartGame = () =>{
+
+        console.log("Card Info: ", this.state.cardInfo);
+        // toggle all selected cards
+        // flip all Matched
+        for (const matchedCard of this.state.matchedCards) {
+            this.refs['card'+matchedCard].flipCard();
+        }
+        // flip currentCard if any
+        if(this.state.previousCardIndex !== -1){
+            this.refs['card'+this.state.previousCardIndex].flipCard();
+        }
+        this.initializeCardInformation();
+        this.startTimer();
+        //setTimeout(()=>{this.handleGameComplete(this.state.totalCards)}, 8000)
+    };
 
     printState(){
         console.log("State Info", this.state);
     }
 
     handleClick = (index) =>{
-        console.log("Clicked Card ", index);
         let numClicks = this.state.totalAttempts+1;
         this.updateCardSelected(index, numClicks);
     };
-
-    makeForceFlipFalse(items){
-        for (let row of items) {
-            for(let cardInfo of row){
-                cardInfo.forceFlip = false;
-            }
-        }
-        return items;
-    }
 
     getElementIn2dArray(array2d, index1d, colSize){
         return {...array2d[~~(index1d / colSize)][index1d % colSize]};
@@ -141,7 +195,6 @@ class SelectedGame extends Component
         let colSize = this.state.totalColumns;
 
         let items = [...this.state.cardInfo];
-        items = this.makeForceFlipFalse(items);
         let rowClicked =  ~~(currentCardIndex / colSize);
         let  colClicked = [currentCardIndex % colSize];
 
@@ -156,12 +209,12 @@ class SelectedGame extends Component
             let prevCard = this.getElementIn2dArray(this.state.cardInfo, previousCardIndex, colSize);
             let currCard = clickedCard;
             //console.log("Prev Card", prevCard, "Current Card", currCard);
-            console.log("Colors:", prevCard.color, currCard.color);
+            //console.log("Colors:", prevCard.color, currCard.color);
 
             // Cards are not same, close both curr and prev
             if(!this.areCardsSame(prevCard, currCard)){
-                currCard.forceFlip = true;
-                prevCard.forceFlip = true;
+                this.refs['card'+previousCardIndex].flipCard();
+                this.refs['card'+currentCardIndex].flipCard();
                 failureAttempts += 2;
             }
             // Cards are Same
@@ -170,8 +223,8 @@ class SelectedGame extends Component
                 prevCard.visible = false;
                 remainingCards -=2;
                 successAttempts +=2;
-                matchedCards +=2;
-                console.log("Cards Clicked Same, Matched Cards Are ", matchedCards);
+                matchedCards  = [...matchedCards, currentCardIndex, previousCardIndex];
+                console.log("Cards Clicked Same, Matched Cards Are ", matchedCards.length);
                 this.handleGameComplete(matchedCards);
             }
 
@@ -187,15 +240,116 @@ class SelectedGame extends Component
                 matchedCards: matchedCards});
         }
         else {
+            //
             this.setState({cardInfo: items, previousCardIndex: currentCardIndex, totalAttempts : totalClicks});
         }
     };
 
     handleGameComplete(matchedCards){
-        if(matchedCards === this.state.totalCards){
-            Alert.alert("Game Completed","You have completed it ");
+        if(matchedCards.length === this.state.totalCards){
+            //Alert.alert("Game Completed","You have completed it ");
             console.log("Time : 0", "Success Atempts", this.state.successAttempts, "Failure:", this.state.failureAttempts);
+            this.stopTimer();
+
+            this.props.navigation.navigate('GameStats', {
+                level: this.state.level,
+                category: this.state.category,
+                totalSelections: (this.state.totalAttempts+2)/2,
+                correctSelections: (this.state.successAttempts+2)/2,
+                inCorrectSelections: (this.state.failureAttempts+2)/2,
+                time: this.state.time,
+                restartGame: this.restartGame
+            });
         }
+    }
+
+    resetState(){
+        this.setState({totalAttempts:0});
+    }
+
+    pauseGame = () => {
+        this.setState({isPaused:true}, this.stopTimer);
+    };
+
+    resumeGame = () => {
+        this.setState({isPaused:false},this.startTimer);
+    };
+
+    exitGame = () => {
+        this.stopTimer();
+        this.setState({isPaused:false});
+        const resetAction = StackActions.reset({
+            index: 1,
+            actions: [
+                NavigationActions.navigate({ routeName: 'Home' }),
+                NavigationActions.navigate({ routeName: 'GameModes' })
+            ]
+        });
+        this.props.navigation.dispatch(resetAction);
+    }
+
+    tick = () => {
+
+        // timeInMilliseconds - timeElapsedSoFar
+        let prevTime = this.state.prevTime, timeInMilliseconds = this.state.timeInMilliseconds;
+        let time = this.state.time ? this.state.time : {};
+
+        let prev = prevTime ? prevTime : Date.now();
+        let diffTime = Date.now() - prev;
+        timeInMilliseconds = timeInMilliseconds + diffTime;
+        let newTime = this.toTime(timeInMilliseconds);
+        prevTime = (Date.now());
+        time = newTime;
+        this.setState({prevTime, time, timeInMilliseconds});
+    };
+
+    startTimer = () => {
+
+        let timer = setInterval(this.tick,1000);
+        this.setState({ timer });
+    };
+
+    stopTimer = () => {
+        clearInterval(this.state.timer);
+        this.setState({prevTime:null});
+    };
+
+    toTime = time => {
+        let milliseconds = parseInt(time % 1000),
+            seconds = Math.floor((time / 1000) % 60),
+            minutes = Math.floor(time / (1000 * 60));
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        return {
+            milliseconds,
+            seconds,
+            minutes
+        };
+};
+
+    onOptionSelect(value){
+        console.log("Selected ", value);
+
+        // pause game
+        if(value === 1){
+            this.pauseGame();
+        }
+        // Restart Game
+        else if(value === 2){
+            this.restartGame();
+        }
+
+        this.menu.close();
+    }
+
+    onRef = r => {
+        this.menu = r;
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.state.timer);
     }
 
     render() {
@@ -209,12 +363,69 @@ class SelectedGame extends Component
                         </Button>
                     </Left>
                     <Body>
-                        <Text>Header</Text>
+                        {
+                            this.state.time &&
+                            <Text style={styles.counterText}>{this.state.time.minutes} : {this.state.time.seconds}</Text>
+                        }
                     </Body>
-                    <Right />
+                    <Right >
+                        <Menu onSelect={value => this.onOptionSelect(value)} ref={this.onRef}>
+                            <MenuTrigger>
+                                <Icon name='more' style={{
+                                    fontSize: 30, width: 50, marginRight: 2, textAlign: 'center',
+                                    fontWeight: '700', color: 'white'
+                                }}/>
+                            </MenuTrigger>
+                            <MenuOptions>
+                                <MenuOption text='Pause' value={1}/>
+                                <View style={styles.divider}/>
+                                <MenuOption text='Restart' value={2}/>
+                                <View style={styles.divider}/>
+                            </MenuOptions>
+                        </Menu>
+                    </Right>
                 </Header>
 
-                <TouchableOpacity onPress={()=>{this.setState({totalAttempts:0})}}>
+                <Modal visible={this.state.isPaused} transparent={true} animationType='slide'>
+
+                    <View style={{
+                        flex: 1, flexDirection:'column', alignItems: 'center', justifyContent: 'center',}}>
+
+                        <Card>
+
+                            <View style={{height:100, backgroundColor:'#444',
+                                flexDirection:'row',
+                                alignItems:'center',
+                                justifyContent:'space-around'}}>
+
+                                <Icon name='pause' style={{fontSize: 60, fontWeight: '700', color: '#bbb', textAlign:'center'}}/>
+
+                                <Text style={{color:'white', fontSize:32, fontWeight:'700'}}>
+                                    Game Paused
+                                </Text>
+                            </View>
+
+                            <CardItem>
+                                <View style={{
+                                    width: 300, height: 200, alignItems: 'center', justifyContent:'space-around'
+                                }}>
+                                    <Button success style={{paddingHorizontal:10}} onPress={this.resumeGame}>
+                                        <Icon name='play' />
+                                        <Text>Resume</Text>
+                                    </Button>
+
+                                    <Button danger style={{paddingHorizontal:10}} onPress={this.exitGame}>
+                                        <Icon name='exit' />
+                                        <Text>Exit Game</Text>
+                                    </Button>
+                                </View>
+                            </CardItem>
+                        </Card>
+                    </View>
+
+                </Modal>
+
+                <TouchableOpacity onPress={this.resetState}>
                     <Text>Refresh</Text>
                 </TouchableOpacity>
 
@@ -228,12 +439,14 @@ class SelectedGame extends Component
                                             row.map( (cardInformation) => {
                                                 return(
                                                     <GameCardSelected
+                                                        ref={'card'+cardInformation.index}
+                                                        width = {width/this.state.totalColumns}
+                                                        height = {height/ this.state.totalRows}
                                                         faceUpImageUri={cardInformation.faceUpImageUri}
                                                         key={cardInformation.index}
                                                         index={cardInformation.index}
                                                         imageUri={cardInformation.color}
                                                         clickable={cardInformation.clickable}
-                                                        forceFlip={cardInformation.forceFlip}
                                                         handleClick={this.handleClick}/>
                                                 )
                                             })
@@ -251,7 +464,16 @@ class SelectedGame extends Component
 }
 
 const styles = StyleSheet.create({
-
+    counterText:{
+        fontSize: 28,
+        color: '#fff'
+    },
+    divider: {
+        marginVertical: 5,
+        marginHorizontal: 2,
+        borderBottomWidth: 1,
+        borderColor: '#ccc'
+    },
 });
 
 export default SelectedGame;

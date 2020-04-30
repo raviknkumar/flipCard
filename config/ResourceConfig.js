@@ -125,4 +125,16 @@ export const levelInfo = {
         rows:6,
         columns:4
     },
-}
+};
+
+export const darkTheme = {
+    bgColor: '#273048', // background of class
+    color: '#fff', // fontColor
+    elementColor: '#eee' // background of element
+};
+
+export const lightTheme =  {
+    bgColor: '#ddd', // background of class
+    color: '#444', // fontColor
+    elementColor: '#a52a2aff' // background of element
+};

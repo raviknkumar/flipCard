@@ -1,10 +1,10 @@
 import {Body, Button, Card, CardItem, Container, Content, Header, Icon, Left, Right, Text} from "native-base";
 import CardFlip from 'react-native-card-flip';
-import React, {Component} from "react";
+import React, {Component, PureComponent} from "react";
 import _ from 'underscore'
 import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 
-export default class GameCardSelected extends Component {
+export default class GameCardSelected extends PureComponent {
 
     constructor(props){
         super(props);
@@ -16,13 +16,18 @@ export default class GameCardSelected extends Component {
         setTimeout(() => {this.props.handleClick(this.props.index)}, 0);
     };
 
+    flipCard = () => {
+        this.card.flip();
+    }
+
     callOther(){
-        this.props.handleClick(this.props.index)
+        this.props.handleClick(this.props.index);
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
+
         if(this.props.forceFlip){
-            //console.log("Flipping  Card In CDUpdate", this.props.index);
+            console.log("Flipping Card Forced In CDUpdate", this.props.index);
             this.card.flip();
         }
     }
@@ -37,12 +42,12 @@ export default class GameCardSelected extends Component {
                 <TouchableOpacity
                     activeOpacity={this.props.clickable ? 1 : 0.7}
                     style={[styles.card,]}
-                    onPress={() => this.cardClicked()}>
+                    onPress={this.cardClicked}>
 
                     {this.props.faceUpImageUri ?
 
                         <Image source={this.props.faceUpImageUri}
-                               style={{ flex: 1, width: null, height: null, resizeMode: 'contain', margin:5, borderRadius:10 }}
+                               style={{ flex: 1, width: this.props.width-10, height: this.props.height, resizeMode: 'contain', margin:5, borderRadius:10 }}
                         />
                         :
 
@@ -57,12 +62,10 @@ export default class GameCardSelected extends Component {
 
                 <View
                     activeOpacity={1}
-                    style={[styles.card, styles.card2]}>
-                    <View style={{flex:1, backgroundColor:'white', ...styles.back}}>
-                        <Image source={this.props.imageUri}
-                               style={{ flex: 1, width: null, height: null, resizeMode: 'contain', margin:5 }}
-                        />
-                    </View>
+                    style={[styles.card]}>
+                    <Image source={this.props.imageUri}
+                           style={{flex: 1, width: this.props.width-10, height: this.props.height, resizeMode: 'contain',}}
+                    />
                 </View>
             </CardFlip>
         );
