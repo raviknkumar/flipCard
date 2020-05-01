@@ -35,6 +35,7 @@ class GameHeader extends React.Component {
                                     style={{height: 200, ...styles.container, borderRadius:5}}>
 
                         <Text style={{
+                            fontFamily:'nunito-bold',
                             color: '#ffffff', fontWeight: '900',
                             fontSize: 50,
                             transform: [{rotate: "320deg"}],
@@ -52,20 +53,22 @@ class GameHeader extends React.Component {
                     style={{...styles.card, ...styles.card2,  borderWidth:10, borderColor:'white',}}
                     onPress={() => this.card.flip()}>
 
-                    <Text style={{...styles.containerText, ...styles.flipContainerTextTop}}>FLIP</Text>
+                    <Text style={{...styles.containerText, color:'black',...styles.flipContainerTextTop}}>FLIP</Text>
 
-                    <LinearGradient colors={['#005C97', '#363795']}
+                    <LinearGradient colors={['powderblue', '#ebfff0']}
                                     start={[0, 0]} end={[1, 0]}
                                     style={{height: 200, ...styles.container,}}>
 
                         <Text style={{
-                            color: 'white', fontWeight: '900',
+                            fontFamily:'nunito-bold',
+                            color:'black'
+                            , fontWeight: '900',
                             fontSize: 50,
                             transform: [{rotate: "320deg"}],
                         }}>THE</Text>
 
                     </LinearGradient>
-                    <Text style={{...styles.containerText,...styles.flipContainerBottomText}}>CARD</Text>
+                    <Text style={{...styles.containerText,color:'black',...styles.flipContainerBottomText}}>CARD</Text>
                 </TouchableOpacity>
             </CardFlip>
         );
@@ -120,6 +123,7 @@ const styles = StyleSheet.create({
 
     containerText:{
         textTransform: 'uppercase',
+        fontFamily:'nunito-bold',
         position:'absolute',
         color: "white",
         fontSize: 32,

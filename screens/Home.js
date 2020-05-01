@@ -120,7 +120,8 @@ const styles = StyleSheet.create({
         textAlign:'center',
         fontSize:24,
         fontWeight: '200',
-        color:'white'
+        color:'white',
+        fontFamily:'nunito-bold'
     }
 });
 

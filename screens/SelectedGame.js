@@ -1,12 +1,13 @@
 import React, {Component} from 'react';
 import { AppLoading } from 'expo';
 import {Asset} from "expo-asset";
-import {StyleSheet, View, Text, Alert, TouchableOpacity, Dimensions, Modal} from 'react-native';
+import {StyleSheet, View, Text, Alert, TouchableOpacity, Dimensions, Modal, Platform} from 'react-native';
 import {cardsInformation, levelInfo } from "../config/ResourceConfig";
 import _ from "underscore";
 import {NavigationActions, StackActions} from 'react-navigation';
 import {Body, Button, Container, Grid, Header, Icon, Left, Right, Row, Card, CardItem} from "native-base";
 import GameCardSelected from "../components/GameCardSelected";
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
 import {
     Menu,
@@ -395,7 +396,7 @@ class SelectedGame extends Component
                     <Header>
                         <Left>
                             <Button transparent>
-                                <Icon name='menu'/>
+                                <Ionicons name={Platform.OS === 'ios' ? "ios-menu" : 'md-menu'} size={32} color="blue" />
                             </Button>
                         </Left>
                         <Body>
@@ -414,10 +415,13 @@ class SelectedGame extends Component
                                     }}/>
                                 </MenuTrigger>
                                 <MenuOptions>
-                                    <MenuOption text='Pause' value={1}/>
+                                    <MenuOption value={1}>
+                                        <Text style={{padding:5, fontWeight:'200'}}>Pause</Text>
+                                    </MenuOption>
                                     <View style={styles.divider}/>
-                                    <MenuOption text='Restart' value={2}/>
-                                    <View style={styles.divider}/>
+                                    <MenuOption value={2}>
+                                        <Text style={{padding:5, fontWeight:'200'}}>Restart</Text>
+                                    </MenuOption>
                                 </MenuOptions>
                             </Menu>
                         </Right>
@@ -517,7 +521,7 @@ const styles = StyleSheet.create({
         marginVertical: 5,
         marginHorizontal: 2,
         borderBottomWidth: 1,
-        borderColor: '#ccc'
+        borderColor: '#eee'
     },
 });
 
