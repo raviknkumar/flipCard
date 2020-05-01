@@ -24,14 +24,6 @@ export default class GameCardSelected extends PureComponent {
         this.props.handleClick(this.props.index);
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-
-        if(this.props.forceFlip){
-            console.log("Flipping Card Forced In CDUpdate", this.props.index);
-            this.card.flip();
-        }
-    }
-
     render() {
         return (
             <CardFlip

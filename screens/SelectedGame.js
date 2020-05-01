@@ -1,4 +1,6 @@
 import React, {Component} from 'react';
+import { AppLoading } from 'expo';
+import {Asset} from "expo-asset";
 import {StyleSheet, View, Text, Alert, TouchableOpacity, Dimensions, Modal} from 'react-native';
 import {cardsInformation, levelInfo } from "../config/ResourceConfig";
 import _ from "underscore";
@@ -204,7 +206,7 @@ class SelectedGame extends Component
 
         if(this.checkForMatch(currentCardIndex)){
             let previousCardIndex = this.state.previousCardIndex;
-            console.log(previousCardIndex, currentCardIndex);
+            //console.log(previousCardIndex, currentCardIndex);
 
             let prevCard = this.getElementIn2dArray(this.state.cardInfo, previousCardIndex, colSize);
             let currCard = clickedCard;
@@ -214,7 +216,9 @@ class SelectedGame extends Component
             // Cards are not same, close both curr and prev
             if(!this.areCardsSame(prevCard, currCard)){
                 this.refs['card'+previousCardIndex].flipCard();
-                this.refs['card'+currentCardIndex].flipCard();
+                setTimeout(()=>{
+                    this.refs['card'+currentCardIndex].flipCard();
+                }, 0);
                 failureAttempts += 2;
             }
             // Cards are Same
@@ -346,121 +350,162 @@ class SelectedGame extends Component
 
     onRef = r => {
         this.menu = r;
-    }
+    };
+
+    loadResources = async () => {
+
+        let category = this.props.navigation.getParam('category');
+
+        console.log("Load Resources");
+
+        let cardInfoArray = [...cardsInformation[category].cardInfo];
+        let imagesToCache = [];
+        for (const cardInfo of cardInfoArray) {
+            imagesToCache = [...imagesToCache, cardInfo.prop];
+        }
+
+        let cardFaceUp = cardsInformation[category].faceUpImageUri;
+        if(cardFaceUp){
+            imagesToCache = [...imagesToCache, cardFaceUp];
+        }
+
+        return  Promise.all([
+            Asset.loadAsync(imagesToCache),
+        ]);
+    };
+
+    _handleLoadingError = error => {
+        // In this case, you might want to report the error to your error
+        // reporting service, for example Sentry
+        console.warn(error);
+    };
+
+    _handleFinishLoading = () => {
+        this.setState({ resourcesLoaded: true });
+    };
 
     componentWillUnmount() {
         clearInterval(this.state.timer);
     }
 
     render() {
-        return (
-            <Container>
+            return (
+                <Container>
 
-                <Header>
-                    <Left>
-                        <Button transparent>
-                            <Icon name='menu' />
-                        </Button>
-                    </Left>
-                    <Body>
-                        {
-                            this.state.time &&
-                            <Text style={styles.counterText}>{this.state.time.minutes} : {this.state.time.seconds}</Text>
-                        }
-                    </Body>
-                    <Right >
-                        <Menu onSelect={value => this.onOptionSelect(value)} ref={this.onRef}>
-                            <MenuTrigger>
-                                <Icon name='more' style={{
-                                    fontSize: 30, width: 50, marginRight: 2, textAlign: 'center',
-                                    fontWeight: '700', color: 'white'
-                                }}/>
-                            </MenuTrigger>
-                            <MenuOptions>
-                                <MenuOption text='Pause' value={1}/>
-                                <View style={styles.divider}/>
-                                <MenuOption text='Restart' value={2}/>
-                                <View style={styles.divider}/>
-                            </MenuOptions>
-                        </Menu>
-                    </Right>
-                </Header>
-
-                <Modal visible={this.state.isPaused} transparent={true} animationType='slide'>
-
-                    <View style={{
-                        flex: 1, flexDirection:'column', alignItems: 'center', justifyContent: 'center',}}>
-
-                        <Card>
-
-                            <View style={{height:100, backgroundColor:'#444',
-                                flexDirection:'row',
-                                alignItems:'center',
-                                justifyContent:'space-around'}}>
-
-                                <Icon name='pause' style={{fontSize: 60, fontWeight: '700', color: '#bbb', textAlign:'center'}}/>
-
-                                <Text style={{color:'white', fontSize:32, fontWeight:'700'}}>
-                                    Game Paused
-                                </Text>
-                            </View>
-
-                            <CardItem>
-                                <View style={{
-                                    width: 300, height: 200, alignItems: 'center', justifyContent:'space-around'
-                                }}>
-                                    <Button success style={{paddingHorizontal:10}} onPress={this.resumeGame}>
-                                        <Icon name='play' />
-                                        <Text>Resume</Text>
-                                    </Button>
-
-                                    <Button danger style={{paddingHorizontal:10}} onPress={this.exitGame}>
-                                        <Icon name='exit' />
-                                        <Text>Exit Game</Text>
-                                    </Button>
-                                </View>
-                            </CardItem>
-                        </Card>
-                    </View>
-
-                </Modal>
-
-                <TouchableOpacity onPress={this.resetState}>
-                    <Text>Refresh</Text>
-                </TouchableOpacity>
-
-                <Grid style={{flex: 1, marginVertical: 5}}>
-                    {
-                        this.state.cardInfo.map(
-                            (row, index) => {
-                                return (
-                                    <Row key={index} style={{marginVertical:3, marginHorizontal:10}}>
-                                        {
-                                            row.map( (cardInformation) => {
-                                                return(
-                                                    <GameCardSelected
-                                                        ref={'card'+cardInformation.index}
-                                                        width = {width/this.state.totalColumns}
-                                                        height = {height/ this.state.totalRows}
-                                                        faceUpImageUri={cardInformation.faceUpImageUri}
-                                                        key={cardInformation.index}
-                                                        index={cardInformation.index}
-                                                        imageUri={cardInformation.color}
-                                                        clickable={cardInformation.clickable}
-                                                        handleClick={this.handleClick}/>
-                                                )
-                                            })
-                                        }
-                                    </Row>
-                                )
+                    <Header>
+                        <Left>
+                            <Button transparent>
+                                <Icon name='menu'/>
+                            </Button>
+                        </Left>
+                        <Body>
+                            {
+                                this.state.time &&
+                                <Text
+                                    style={styles.counterText}>{this.state.time.minutes} : {this.state.time.seconds}</Text>
                             }
-                        )
-                    }
-                </Grid>
+                        </Body>
+                        <Right>
+                            <Menu onSelect={value => this.onOptionSelect(value)} ref={this.onRef}>
+                                <MenuTrigger>
+                                    <Icon name='more' style={{
+                                        fontSize: 30, width: 50, marginRight: 2, textAlign: 'center',
+                                        fontWeight: '700', color: 'white'
+                                    }}/>
+                                </MenuTrigger>
+                                <MenuOptions>
+                                    <MenuOption text='Pause' value={1}/>
+                                    <View style={styles.divider}/>
+                                    <MenuOption text='Restart' value={2}/>
+                                    <View style={styles.divider}/>
+                                </MenuOptions>
+                            </Menu>
+                        </Right>
+                    </Header>
 
-            </Container>
-        );
-    }
+                    <Modal visible={this.state.isPaused} transparent={true} animationType='slide'>
+
+                        <View style={{
+                            flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        }}>
+
+                            <Card>
+
+                                <View style={{
+                                    height: 100, backgroundColor: '#444',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-around'
+                                }}>
+
+                                    <Icon name='pause' style={{
+                                        fontSize: 60,
+                                        fontWeight: '700',
+                                        color: '#bbb',
+                                        textAlign: 'center'
+                                    }}/>
+
+                                    <Text style={{color: 'white', fontSize: 32, fontWeight: '700'}}>
+                                        Game Paused
+                                    </Text>
+                                </View>
+
+                                <CardItem>
+                                    <View style={{
+                                        width: 300, height: 200, alignItems: 'center', justifyContent: 'space-around'
+                                    }}>
+                                        <Button success style={{paddingHorizontal: 10}} onPress={this.resumeGame}>
+                                            <Icon name='play'/>
+                                            <Text>Resume</Text>
+                                        </Button>
+
+                                        <Button danger style={{paddingHorizontal: 10}} onPress={this.exitGame}>
+                                            <Icon name='exit'/>
+                                            <Text>Exit Game</Text>
+                                        </Button>
+                                    </View>
+                                </CardItem>
+                            </Card>
+                        </View>
+
+                    </Modal>
+
+                    <TouchableOpacity onPress={this.resetState}>
+                        <Text>Refresh</Text>
+                    </TouchableOpacity>
+
+                    <Grid style={{flex: 1, marginVertical: 5}}>
+                        {
+                            this.state.cardInfo.map(
+                                (row, index) => {
+                                    return (
+                                        <Row key={index} style={{marginVertical: 3, marginHorizontal: 10}}>
+                                            {
+                                                row.map((cardInformation) => {
+                                                    return (
+                                                        <GameCardSelected
+                                                            ref={'card' + cardInformation.index}
+                                                            width={width / this.state.totalColumns}
+                                                            height={height / this.state.totalRows}
+                                                            faceUpImageUri={cardInformation.faceUpImageUri}
+                                                            key={cardInformation.index}
+                                                            index={cardInformation.index}
+                                                            imageUri={cardInformation.color}
+                                                            clickable={cardInformation.clickable}
+                                                            handleClick={this.handleClick}/>
+                                                    )
+                                                })
+                                            }
+                                        </Row>
+                                    )
+                                }
+                            )
+                        }
+                    </Grid>
+
+                </Container>
+            );
+        }
 }
 
 const styles = StyleSheet.create({
@@ -478,3 +523,10 @@ const styles = StyleSheet.create({
 
 export default SelectedGame;
 
+
+/*Font.loadAsync({
+                Ionicons: require("@expo/vector-icons/fonts/Ionicons.ttf"),
+                Arial: require("native-base/Fonts/Roboto.ttf"),
+                Roboto: require("native-base/Fonts/Roboto.ttf"),
+                Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
+            }),*/
