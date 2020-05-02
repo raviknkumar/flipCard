@@ -1,21 +1,18 @@
 import React, {Component} from 'react';
 import { AppLoading } from 'expo';
 import {Asset} from "expo-asset";
-import {StyleSheet, View, Text, Alert, TouchableOpacity, Dimensions, Modal, Platform} from 'react-native';
+import {StyleSheet, View, Text, Alert, TouchableOpacity, Dimensions, Modal, Platform, Image, BackHandler} from 'react-native';
 import {cardsInformation, levelInfo } from "../config/ResourceConfig";
 import _ from "underscore";
 import {NavigationActions, StackActions} from 'react-navigation';
 import {Body, Button, Container, Grid, Header, Icon, Left, Right, Row, Card, CardItem} from "native-base";
 import GameCardSelected from "../components/GameCardSelected";
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import {Menu, MenuOptions, MenuOption, MenuTrigger,} from 'react-native-popup-menu';
+import {Audio} from "expo-av";
+import {initializeCardInfo, getElementIn2dArray, areCardsSame, toTime} from "./SelectedGameHelper";
+import {gameStyles} from "../styles/GameStyles";
 
-import {
-    Menu,
-    MenuProvider,
-    MenuOptions,
-    MenuOption,
-    MenuTrigger,
-} from 'react-native-popup-menu';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
@@ -24,51 +21,91 @@ const CARD_REPEAT_FREQUENCY = 2; // Should be even only
 
 class SelectedGame extends Component
 {
-    static shuffle(array) {
+    flipSound;
 
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * i);
-            const temp = array[i];
-            array[i] = array[j];
-            array[j] = temp
-        }
-        return array;
-    }
-
+    // Constructor
     constructor (props) {
         super(props);
-        this.state = {};
+        this.state = {
+            level: 0,
+            category: '',
+            cardValues: [],
+            cardInfo:[],
+            totalRows:0,
+            totalColumns:0,
+            previousCardIndex: -1,
+            currentCardIndex:-1,
+            totalAttempts: 0,
+            successAttempts:0,
+            failureAttempts:0,
+            remainingCards:0,
+            cardValuesToApply2d:[],
+            cardValuesToApply:[],
+            totalCards: 0,
+            matchedCards: [],
+            prevTime:null,
+            time:null,
+            timeInMilliseconds:0,
+            timer: null,
+            restartGame: false,
+            isPaused: false,
+            resourcesLoaded: false,
+            isMuted: false,
+        };
     };
 
-    UNSAFE_componentWillMount() {
+    // LIFE CYCLE HOOKS
+
+    async componentDidMount() {
+
+        BackHandler.addEventListener("hardwareBackPress", this.backAction);
+
+        //this._focusListener = this.props.navigation.addListener('didFocus', this._componentFocused);
         this.initializeCardInformation();
         this.startTimer();
-        //setTimeout(()=>{this.handleGameComplete(this.state.totalCards)}, 8000)
+
+        // USed For testing
+        setTimeout(()=>{this.handleGameComplete([])}, 20000);
+
+        await this.createSounds();
     }
 
-    initializeCardInfo(cardValuesToApply2d, faceUpImageUri){
+    async _componentFocused() {
 
-        let cardInfo = [], i=0;
+        // Set Mute
+        let muted = this.state.isMuted;
 
-        for (const cardValuesRow of cardValuesToApply2d) {
-            let cardValuesInfo = [];
-            for(const colorInformation of cardValuesRow){
-                let colorInfoObj = {
-                    index:i,
-                    clickable: true,
-                    id: colorInformation.id,
-                    color: colorInformation.prop,
-                    visible: true,
-                    faceUpImageUri: faceUpImageUri
-                };
-                cardValuesInfo.push(colorInfoObj);
-                i++;
-            }
-            cardInfo.push(cardValuesInfo);
+        // toggle all selected cards
+        // flip all Matched
+        for (const matchedCard of this.state.matchedCards) {
+            this.refs['card' + matchedCard].flipCard();
         }
-        return cardInfo;
+
+        // flip currentCard if any
+        if (this.state.previousCardIndex !== -1) {
+            this.refs['card' + this.state.previousCardIndex].flipCard();
+        }
+        await this.createSounds();
+        this.initializeCardInformation();
+        this.setState({isMuted: muted});
+        this.startTimer();
+
+
+        setTimeout(() => {
+            this.handleGameComplete([])
+        }, 5000);
     }
 
+    async componentWillUnmount() {
+
+        BackHandler.removeEventListener("hardwareBackPress", this.backAction);
+        clearInterval(this.state.timer);
+        // CLear Audio
+        await this.unloadSounds();
+    }
+
+
+    // Init METHODS
     initializeCardInformation(){
 
         let level = this.props.navigation.getParam('level');
@@ -102,31 +139,8 @@ class SelectedGame extends Component
             cardValuesToApply2d.push(cardValue1d);
         }
 
-        let cardInfo = this.initializeCardInfo(cardValuesToApply2d, faceUpImageUri);
-
-        /*this.state = {
-            level: level,
-            category: category,
-            cardValues: cardValues,
-            cardInfo:cardInfo,
-            totalRows:rowSize,
-            totalColumns:colSize,
-            previousCardIndex: -1,
-            currentCardIndex:-1,
-            totalAttempts: 0,
-            successAttempts:0,
-            failureAttempts:0,
-            remainingCards:rowSize * colSize,
-            cardValuesToApply2d:cardValuesToApply2d,
-            cardValuesToApply:cardValuesToApply,
-            totalCards: rowSize * colSize,
-            matchedCards: 0,
-            prevTime:null,
-            time:null,
-            timeInMilliseconds:0,
-            timer: null,
-            restartGame: false,
-        };*/
+        //let cardInfo = this.initializeCardInfo(cardValuesToApply2d, faceUpImageUri);
+        let cardInfo = initializeCardInfo(cardValuesToApply2d, faceUpImageUri);
 
         this.setState({
             level: level,
@@ -152,11 +166,20 @@ class SelectedGame extends Component
             restartGame: false,
             isPaused: false,
             resourcesLoaded: false,
+            isMuted: false,
         });
     }
 
+    // to handle restart game from the level Complete Screen
+    restartLevel = async () => {
+        await this.createSounds();
+        this.restartGame();
+        setTimeout(()=>{this.handleGameComplete([])}, 5000);
+    };
+
     restartGame = () =>{
 
+        let muted = this.state.isMuted;
         console.log("Card Info: ", this.state.cardInfo);
         // toggle all selected cards
         // flip all Matched
@@ -168,30 +191,15 @@ class SelectedGame extends Component
             this.refs['card'+this.state.previousCardIndex].flipCard();
         }
         this.initializeCardInformation();
+        this.setState({isMuted:muted});
         this.startTimer();
-        //setTimeout(()=>{this.handleGameComplete(this.state.totalCards)}, 8000)
     };
 
-    printState(){
-        console.log("State Info", this.state);
-    }
-
     handleClick = (index) =>{
+        this.playFlipSound();
         let numClicks = this.state.totalAttempts+1;
         this.updateCardSelected(index, numClicks);
     };
-
-    getElementIn2dArray(array2d, index1d, colSize){
-        return {...array2d[~~(index1d / colSize)][index1d % colSize]};
-    }
-
-    areCardsSame(card1, card2){
-        return card1.color === card2.color && card1.index !== card2.index;
-    }
-
-    checkForMatch(currentCardIndex){
-        return this.state.previousCardIndex !== -1 && this.state.previousCardIndex !== currentCardIndex;
-    }
 
     updateCardSelected = (currentCardIndex, totalClicks) => {
 
@@ -201,25 +209,28 @@ class SelectedGame extends Component
         let rowClicked =  ~~(currentCardIndex / colSize);
         let  colClicked = [currentCardIndex % colSize];
 
-        let clickedCard = this.getElementIn2dArray(this.state.cardInfo, currentCardIndex, colSize);
+        let clickedCard = getElementIn2dArray(this.state.cardInfo, currentCardIndex, colSize);
         let {remainingCards, successAttempts, failureAttempts, matchedCards}  = this.state;
         //console.log("Destructured Props", remainingCards, successAttempts, failureAttempts);
 
         if(this.checkForMatch(currentCardIndex)){
+
             let previousCardIndex = this.state.previousCardIndex;
             //console.log(previousCardIndex, currentCardIndex);
 
-            let prevCard = this.getElementIn2dArray(this.state.cardInfo, previousCardIndex, colSize);
+            let prevCard = getElementIn2dArray(this.state.cardInfo, previousCardIndex, colSize);
             let currCard = clickedCard;
-            //console.log("Prev Card", prevCard, "Current Card", currCard);
-            //console.log("Colors:", prevCard.color, currCard.color);
 
             // Cards are not same, close both curr and prev
-            if(!this.areCardsSame(prevCard, currCard)){
-                this.refs['card'+previousCardIndex].flipCard();
+            if(!areCardsSame(prevCard, currCard)){
+
+                let prevCardRef =  this.refs['card'+previousCardIndex];
+                let currCardRef =  this.refs['card'+currentCardIndex];
                 setTimeout(()=>{
-                    this.refs['card'+currentCardIndex].flipCard();
-                }, 0);
+                   prevCardRef.flipCard();
+                   currCardRef.flipCard();
+                }, GameCardSelected.CARD_FLIP_DURATION+100);
+
                 failureAttempts += 2;
             }
             // Cards are Same
@@ -250,24 +261,32 @@ class SelectedGame extends Component
         }
     };
 
-    handleGameComplete(matchedCards){
-        if(matchedCards.length === this.state.totalCards){
-            //Alert.alert("Game Completed","You have completed it ");
-            console.log("Time : 0", "Success Atempts", this.state.successAttempts, "Failure:", this.state.failureAttempts);
-            this.stopTimer();
+    checkForMatch = (currentCardIndex) => {
+        return this.state.previousCardIndex !== -1 && this.state.previousCardIndex !== currentCardIndex;
+    };
 
-            this.props.navigation.navigate('GameStats', {
+    async handleGameComplete(matchedCards) {
+        if (true) {
+            BackHandler.removeEventListener("hardwareBackPress", this.backAction);
+            this.stopTimer();
+            // clear back press
+
+            await this.unloadSounds();
+
+            this.props.navigation.navigate('LevelComplete', {
                 level: this.state.level,
                 category: this.state.category,
-                totalSelections: (this.state.totalAttempts+2)/2,
-                correctSelections: (this.state.successAttempts+2)/2,
-                inCorrectSelections: (this.state.failureAttempts+2)/2,
+                totalSelections: (this.state.totalAttempts + 2) / 2,
+                correctSelections: (this.state.successAttempts + 2) / 2,
+                inCorrectSelections: (this.state.failureAttempts + 2) / 2,
                 time: this.state.time,
-                restartGame: this.restartGame
+                restartLevel: this.restartLevel
             });
         }
     }
 
+
+    // Game Control Methods
     resetState(){
         this.setState({totalAttempts:0});
     }
@@ -291,8 +310,9 @@ class SelectedGame extends Component
             ]
         });
         this.props.navigation.dispatch(resetAction);
-    }
+    };
 
+    // TIMER METHODS
     tick = () => {
 
         // timeInMilliseconds - timeElapsedSoFar
@@ -302,7 +322,7 @@ class SelectedGame extends Component
         let prev = prevTime ? prevTime : Date.now();
         let diffTime = Date.now() - prev;
         timeInMilliseconds = timeInMilliseconds + diffTime;
-        let newTime = this.toTime(timeInMilliseconds);
+        let newTime = toTime(timeInMilliseconds);
         prevTime = (Date.now());
         time = newTime;
         this.setState({prevTime, time, timeInMilliseconds});
@@ -319,21 +339,7 @@ class SelectedGame extends Component
         this.setState({prevTime:null});
     };
 
-    toTime = time => {
-        let milliseconds = parseInt(time % 1000),
-            seconds = Math.floor((time / 1000) % 60),
-            minutes = Math.floor(time / (1000 * 60));
-
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        return {
-            milliseconds,
-            seconds,
-            minutes
-        };
-};
-
+    // MENU METHODS
     onOptionSelect(value){
         console.log("Selected ", value);
 
@@ -353,64 +359,178 @@ class SelectedGame extends Component
         this.menu = r;
     };
 
-    loadResources = async () => {
+    /* --------- Sound Releated Methods --- */
 
-        let category = this.props.navigation.getParam('category');
+    /**
+     * Used to create sounds used in this screen
+     * @returns {Promise<void>}
+     */
+    createSounds = async () => {
 
-        console.log("Load Resources");
-
-        let cardInfoArray = [...cardsInformation[category].cardInfo];
-        let imagesToCache = [];
-        for (const cardInfo of cardInfoArray) {
-            imagesToCache = [...imagesToCache, cardInfo.prop];
+        try {
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: false,
+                staysActiveInBackground: false,
+                interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+                playsInSilentModeIOS: true,
+                shouldDuckAndroid: true,
+                interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+                playThroughEarpieceAndroid: false
+            });
+        } catch (e) {
+            console.log("Error in setAudioModeAsync", e);
         }
 
-        let cardFaceUp = cardsInformation[category].faceUpImageUri;
-        if(cardFaceUp){
-            imagesToCache = [...imagesToCache, cardFaceUp];
+        await this._playRecording(require('./../assets/sounds/backgroundMusic.mp3'), true, true);
+        try {
+            const {sound} = await Audio.Sound.createAsync(
+                require('./../assets/sounds/flip.wav'),
+                {
+                    shouldPlay: false,
+                    isLooping: false,
+                },
+            );
+            this.flipSound = sound;
+            console.log("Created Flip Sound ", this.flipSound !== null);
+        } catch (e) {
+            console.log("Error In Creating FlipCard Sound", e)
         }
-
-        return  Promise.all([
-            Asset.loadAsync(imagesToCache),
-        ]);
     };
 
-    _handleLoadingError = error => {
-        // In this case, you might want to report the error to your error
-        // reporting service, for example Sentry
-        console.warn(error);
-    };
+    async _playRecording(uri, shouldPlay, isLooping) {
 
-    _handleFinishLoading = () => {
-        this.setState({ resourcesLoaded: true });
-    };
-
-    componentWillUnmount() {
-        clearInterval(this.state.timer);
+        try {
+            const {sound} = await Audio.Sound.createAsync(
+                uri,
+                {
+                    shouldPlay: shouldPlay,
+                    isLooping: isLooping,
+                },
+            );
+            this.backgroundSound = sound;
+            console.log("Created Sound ", this.backgroundSound !== null);
+            this.setState({
+                playingStatus: 'playing'
+            });
+        } catch (e) {
+            console.log("Error In Creating Background Sound", e);
+        }
     }
+
+    async playFlipSound(){
+        if(!this.state.isMuted)
+            await this.flipSound.playFromPositionAsync(0)
+    }
+
+    async _pauseAndPlayRecording() {
+        if (this.backgroundSound != null) {
+            if (this.state.playingStatus === 'playing') {
+                //console.log('pausing...');
+                await this.backgroundSound.pauseAsync();
+                //console.log('paused!');
+                this.setState({
+                    playingStatus: 'donepause',
+                });
+            } else {
+                //console.log('playing...');
+                await this.backgroundSound.playAsync();
+                //console.log('playing!');
+                this.setState({
+                    playingStatus: 'playing',
+                });
+            }
+        }
+    }
+
+    _syncPauseAndPlayRecording() {
+        if (this.backgroundSound != null) {
+            if (this.state.playingStatus == 'playing') {
+                this.backgroundSound.pauseAsync();
+            } else {
+                this.backgroundSound.playAsync();
+            }
+        }
+    }
+
+    _playAndPause = () => {
+        switch (this.state.playingStatus) {
+            case 'nosound':
+                this._playRecording();
+                break;
+            case 'donepause':
+            case 'playing':
+                this._pauseAndPlayRecording();
+                break;
+        }
+    };
+
+    _onMutePressed = async () => {
+        if (this.backgroundSound != null) {
+            let isMuted = this.state.isMuted;
+            await this.backgroundSound.setIsMutedAsync(!isMuted);
+            this.setState({isMuted: !isMuted});
+        }
+    };
+
+    unloadSounds = async () => {
+        console.log('Clear Sounds');
+        try {
+            await Promise.all([
+                this.backgroundSound.stopAsync(),
+                this.backgroundSound.unloadAsync(),
+                this.flipSound.unloadAsync()
+            ]);
+        } catch (error) {
+            console.log("Error In Unloading Sounds", error);
+        }
+    };
+
+    // HANDLE BACK PRESS
+    backAction = () => {
+        Alert.alert("About To Quit!", "Are you sure you want to Quit the game?", [
+            {
+                text: "Cancel",
+                onPress: () => null,
+                style: "cancel"
+            },
+            {
+                text: "QUIT", onPress: () => {this.exitGame()}
+            }
+        ]);
+        return true;
+    };
 
     render() {
             return (
                 <Container>
 
                     <Header>
-                        <Left>
-                            <Button transparent>
-                                <Ionicons name={Platform.OS === 'ios' ? "ios-menu" : 'md-menu'} size={32} color="blue" />
-                            </Button>
-                        </Left>
+
                         <Body>
                             {
                                 this.state.time &&
                                 <Text
-                                    style={styles.counterText}>{this.state.time.minutes} : {this.state.time.seconds}</Text>
+                                    style={gameStyles.counterText}>{this.state.time.minutes} : {this.state.time.seconds}</Text>
                             }
                         </Body>
                         <Right>
+
+                            <Button transparent onPress={this._onMutePressed}>
+                                <View style={{width:40, height:40, borderRadius:20, backgroundColor:'white', alignItems:'center', justifyContent:'center'}}>
+                                {
+                                    this.state.isMuted ?
+                                        <Image source={require("./../assets/icons/icons8-mute-30.png")}/> :
+                                        <Image source={require("./../assets/icons/icons8-speaker-30.png")}/>
+                                }
+                                </View>
+                            </Button>
+
                             <Menu onSelect={value => this.onOptionSelect(value)} ref={this.onRef}>
                                 <MenuTrigger>
-                                    <Icon name='more' style={{
-                                        fontSize: 30, width: 50, marginRight: 2, textAlign: 'center',
+                                    <Ionicons
+                                        name={Platform.OS === 'ios'? 'ios-more' : 'md-more'} style={{
+                                        fontSize: 35, width: 50, marginRight: 2, textAlign: 'center',
+                                        alignItems:'center',
                                         fontWeight: '700', color: 'white'
                                     }}/>
                                 </MenuTrigger>
@@ -418,7 +538,7 @@ class SelectedGame extends Component
                                     <MenuOption value={1}>
                                         <Text style={{padding:5, fontWeight:'200'}}>Pause</Text>
                                     </MenuOption>
-                                    <View style={styles.divider}/>
+                                    <View style={gameStyles.divider}/>
                                     <MenuOption value={2}>
                                         <Text style={{padding:5, fontWeight:'200'}}>Restart</Text>
                                     </MenuOption>
@@ -474,10 +594,6 @@ class SelectedGame extends Component
 
                     </Modal>
 
-                    <TouchableOpacity onPress={this.resetState}>
-                        <Text>Refresh</Text>
-                    </TouchableOpacity>
-
                     <Grid style={{flex: 1, marginVertical: 5}}>
                         {
                             this.state.cardInfo.map(
@@ -513,24 +629,7 @@ class SelectedGame extends Component
 }
 
 const styles = StyleSheet.create({
-    counterText:{
-        fontSize: 28,
-        color: '#fff'
-    },
-    divider: {
-        marginVertical: 5,
-        marginHorizontal: 2,
-        borderBottomWidth: 1,
-        borderColor: '#eee'
-    },
+
 });
 
 export default SelectedGame;
-
-
-/*Font.loadAsync({
-                Ionicons: require("@expo/vector-icons/fonts/Ionicons.ttf"),
-                Arial: require("native-base/Fonts/Roboto.ttf"),
-                Roboto: require("native-base/Fonts/Roboto.ttf"),
-                Roboto_medium: require("native-base/Fonts/Roboto_medium.ttf"),
-            }),*/

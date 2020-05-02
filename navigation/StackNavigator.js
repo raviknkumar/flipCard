@@ -5,22 +5,29 @@ import About from '../screens/About';
 import {createAppContainer} from "react-navigation";
 import GameModes from "../screens/GameModes";
 import SelectedGame from "../screens/SelectedGame";
-import GameStats from "../screens/GameStats";
+import LevelComplete from "../screens/LevelComplete";
+import SoundDemo from "../screens/SoundDemo";
+import TestStorageContext from "../screens/TestStoargeContext";
 
 const screens = {
+
     Home: {
         screen: Home,
-    }, About: {
+    },
+    About: {
         screen: About,
-    }, GameModes: {
+    },
+    GameModes: {
         screen: GameModes
-    }, SelectedGame :{
+    },
+    SelectedGame :{
         screen: SelectedGame,
         navigationOptions:{
             headerShown:false
         }
-    }, GameStats: {
-        screen: GameStats,
+    },
+    LevelComplete: {
+        screen: LevelComplete,
         navigationOptions:{
             headerShown:false
         }

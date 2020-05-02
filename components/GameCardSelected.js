@@ -6,6 +6,8 @@ import {View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 
 export default class GameCardSelected extends PureComponent {
 
+    static CARD_FLIP_DURATION = 400;
+
     constructor(props){
         super(props);
         this.cardClicked= _.debounce(this.cardClicked.bind(this), 1000); // prevent from double click consecutively
@@ -28,7 +30,7 @@ export default class GameCardSelected extends PureComponent {
         return (
             <CardFlip
                 style={{...styles.cardContainer,marginHorizontal:3}}
-                duration = {400}
+                duration = {this.CARD_FLIP_DURATION}
                 ref={card => (this.card = card)}>
 
                 <TouchableOpacity

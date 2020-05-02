@@ -1,15 +1,24 @@
-const ANIMALS = 'animals';
+
+
+const CRICKET = 'Cricket';
+const ANIMALS = 'Animals';
+const PLAYING_CARDS = 'PlayingCards';
+const SOCIAL_MEDIA = 'SocialMedia';
+const CARTOONS = 'Cartoons';
+const FRUITS = 'Fruits';
+
+export const gameCategories= [CRICKET,ANIMALS, PLAYING_CARDS, SOCIAL_MEDIA, CARTOONS, FRUITS];
 
 export const gameModes = [
-    {key:1, category:'Cricket', categoryDescription:'Cricket', logo:''},
-    {key:2, category: 'Animals', categoryDescription:'Animals', logo:''},
-    {key:3, category:'PlayingCards', categoryDescription:'Playing Cards', logo:''},
-    {key:4, category:'SocialMedia', categoryDescription:'Social Media', logo:''},
-    {key:5, category:'Cartoons', categoryDescription:'Cartoons', logo:''},
-    {key:6, category:'Fruits', categoryDescription:'Fruits', logo:''}];
+    {key:1, category: CRICKET, categoryDescription:'Cricket', logo:''},
+    {key:2, category: ANIMALS, categoryDescription:'Animals', logo:''},
+    {key:3, category: PLAYING_CARDS, categoryDescription:'Playing Cards', logo:''},
+    {key:4, category:SOCIAL_MEDIA, categoryDescription:'Social Media', logo:''},
+    {key:5, category:CARTOONS, categoryDescription:'Cartoons', logo:''},
+    {key:6, category:FRUITS, categoryDescription:'Fruits', logo:''}];
 
 export const cardsInformation = {
-    'Cricket' : {
+    [CRICKET] : {
         cardInfo: [
             {id:1,prop: require('./../assets/cricket/Dhoni.png')},
             {id:2,prop: require('./../assets/cricket/Rohith.png')},
@@ -26,7 +35,7 @@ export const cardsInformation = {
         ],
         faceUpImageUri: require('./../assets/cricket/CricketCardFaceUp.png'),
     },
-    'Animals' : {
+    [ANIMALS] : {
         cardInfo: [
             {id:1,prop: require('./../assets/animals/Lion.jpg')},
             {id:2,prop: require('./../assets/animals/Tiger.jpg')},
@@ -42,7 +51,7 @@ export const cardsInformation = {
             {id:12,prop: require('./../assets/animals/Panda.jpg')},
         ]
     },
-    'PlayingCards' : {
+    [PLAYING_CARDS] : {
         cardInfo: [
             {id:1,prop: require('./../assets/playingCards/KingClub.png')},
             {id:2,prop: require('./../assets/playingCards/KingHeart.png')},
@@ -59,7 +68,7 @@ export const cardsInformation = {
         ],
         faceUpImageUri: require('./../assets/playingCards/PlayingCardDesign.png')
     }, 
-    'SocialMedia': {
+    [SOCIAL_MEDIA]: {
         cardInfo: [
             {id:1,prop: require('./../assets/socialMedia/Facebook.png')},
             {id:2,prop: require('./../assets/socialMedia/WhatsApp.jpg')},
@@ -76,7 +85,7 @@ export const cardsInformation = {
         ],
         faceUpImageUri: require('./../assets/socialMedia/SocialMediaFaceUp.jpg')
     }, 
-    'Cartoons' :{
+    [CARTOONS] :{
         cardInfo: [
             {id:1,prop: require('./../assets/cartoons/TomJerry.png')},
             {id:2,prop: require('../assets/cartoons/Doraemon.png')},
@@ -93,7 +102,7 @@ export const cardsInformation = {
         ],
         faceUpImageUri: require('./../assets/cartoons/CartoonCardFaceUp.jpg')
     },
-    'Fruits':{
+    [FRUITS]:{
         cardInfo: [
             {id:1,prop: require('./../assets/fruits/Apple.jpg')},
             {id:2,prop: require('../assets/fruits/Banana.jpg')},
@@ -112,18 +121,26 @@ export const cardsInformation = {
     }
 };
 
+
+// Level Info
+export const LEVEL_1 = 1;
+export const LEVEL_2 = 2;
+export const LEVEL_3 = 3;
+
+export const levels = [LEVEL_1, LEVEL_2, LEVEL_3];
+
 export const levelInfo = {
-    1:{
-        rows:4,
-        columns:4
+    [LEVEL_1]: {
+        rows: 4,
+        columns: 4
     },
-    2:{
-        rows:5,
-        columns:4
+    [LEVEL_2]: {
+        rows: 5,
+        columns: 4
     },
-    3:{
-        rows:6,
-        columns:4
+    [LEVEL_3]: {
+        rows: 6,
+        columns: 4
     },
 };
 

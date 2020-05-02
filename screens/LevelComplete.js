@@ -1,16 +1,28 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {darkTheme} from "../config/ResourceConfig";
-import {StyleSheet, View, Text, TouchableOpacity} from 'react-native';
+import {StyleSheet, View, Text, TouchableOpacity, BackHandler, ToastAndroid} from 'react-native';
 import {Button, Content, Footer, Container, Header, Left, Right, FooterTab, Icon, Body} from "native-base";
 import {globalStyles} from "../styles/global";
 
 
-const GameStats = (props) => {
+const LevelComplete = (props) => {
 
     let themeSelected = darkTheme;
 
+    const backAction = () => {
+        // use Return true to disable the back press
+        return true;
+    };
+
+    useEffect(() => {
+        BackHandler.addEventListener("hardwareBackPress", backAction);
+
+        return () =>
+            BackHandler.removeEventListener("hardwareBackPress", backAction);
+    }, []);
+
     const goBack = () =>{
-        props.navigation.state.params.restartGame();
+        props.navigation.state.params.restartLevel();
         props.navigation.goBack();
     };
 
@@ -63,8 +75,10 @@ const GameStats = (props) => {
 
                 <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
                     <Text style={{color:'white', textAlign:'center', fontSize:24, fontWeight:'300'}}>
-                        {props.navigation.getParam('correctSelections') /
-                        (props.navigation.getParam('correctSelections') + props.navigation.getParam('inCorrectSelections'))}%
+                        {
+                            (props.navigation.getParam('correctSelections') * 100) /
+                            (props.navigation.getParam('correctSelections') + props.navigation.getParam('inCorrectSelections'))
+                        }%
                     </Text>
                 </View>
 
@@ -108,7 +122,7 @@ const styles = StyleSheet.create({
     }
 });
 
-export default GameStats;
+export default LevelComplete;
 
 /*
 <View style={{ flexDirection: 'row' }}>
