@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "my game",
+    "slug": "my-game",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "version": "1.0.0",
+    "sdkVersion": "37.0.0",
+    "android":{
+      "package":"com.ravi.mygame",
+      "versionCode":1 ,
+      "icon":"./assets/icon.png"
+    },
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "assets/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    }
+  }
+}
