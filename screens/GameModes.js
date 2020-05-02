@@ -1,24 +1,63 @@
 import React, {useState, useContext} from 'react';
-import {StyleSheet, View, Text, TouchableOpacity,TouchableWithoutFeedback, Modal, FlatList, Keyboard} from 'react-native'
-import {gameModes} from "../config/ResourceConfig";
-import {Card} from "native-base";
+import {StyleSheet, View, Text, TouchableOpacity,TouchableWithoutFeedback, Modal, FlatList, Image, Alert} from 'react-native'
+import {darkTheme, gameModes, lightTheme} from "../config/ResourceConfig";
 import {globalStyles} from "../styles/global";
 import CustomModal from "./CustomModal";
+import Header from "../components/header";
+import {levels} from "../config/ResourceConfig";
+import {StorageContext} from "../contexts/StorageContext";
+
 
 class GameModes extends React.Component{
+
+    theme;
+
+    static contextType = StorageContext;
 
     constructor(props){
         super(props);
         this.state = {
             levelSelected:0,
             categorySelected:'',
-        }
+            gameData:[],
+        };
+        this.theme = darkTheme;
     }
 
-    setLevel = (level) => {
-        console.log("Set Level", level);
-        this.setState({levelSelected:level}, this.navigateToGamePage);
+    async componentDidMount() {
+
+        // Fetch Data From AsyncStorage
+        let {getAllLevelsData} = this.context;
+        let gameData = await getAllLevelsData();
+        this.setState({gameData}, this.processLevelData);
     }
+
+    /*
+    * maps Whether user has played the level or not
+    */
+    processLevelData = () => {
+        let colorInfo = [];
+        let i=0;
+        gameModes.map(item => {
+            let categoryWiseStatsData = [];
+            levels.map(level => {
+                let isPlayed = this.state.gameData[item.category][level.toString()].gamesPlayed !== 0;
+                categoryWiseStatsData = [...categoryWiseStatsData, {
+                    level: level,
+                    isPlayed: isPlayed
+                }]
+            });
+            colorInfo[i++] = {
+                gameMode: item,
+                levelData: categoryWiseStatsData
+            };
+        });
+        this.setState({colorInfo})
+    };
+
+    setLevel = (level) => {
+        this.setState({levelSelected:level}, this.navigateToGamePage);
+    };
 
     navigateToGamePage = () => {
         this.props.navigation.navigate('SelectedGame', {level:this.state.levelSelected, category: this.state.categorySelected});
@@ -31,18 +70,50 @@ class GameModes extends React.Component{
 
     render() {
         return (
-            <View style={styles.container}>
+            <View style={{...styles.container,backgroundColor:this.theme.bgColor}}>
 
                 <CustomModal ref={"customModal"} setLevel={this.setLevel}/>
 
                 <FlatList
-                    keyExtractor={item => item.key.toString()}
-                    data={gameModes}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => {this.openModal(item)}}>
-                            <Card>
-                                <Text style={globalStyles.titleText}>{ item.category }</Text>
-                            </Card>
+                    keyExtractor={item => item.gameMode.key.toString()}
+                    data={this.state.colorInfo}
+                    renderItem={({ item, index }) => (
+                        <TouchableOpacity
+                            style={{flexDirection:'row'}}
+                            onPress={() => {this.openModal(item.gameMode)}}>
+                            <View style={{
+                                flex: 1,
+                                flexDirection: 'row',
+                                ...styles.gameModeContainer,
+                            }}>
+                                <View>
+                                    <Image source={item.gameMode.logo} style={{marginRight:5,marginLeft:5,flex:1, width:55, height:55,
+                                        borderRadius:5,
+                                        resizeMode:'contain'}}/>
+                                </View>
+                                <Text style={{...globalStyles.buttonText, marginHorizontal:10}}>{ item.gameMode.category }</Text>
+
+                                <View style={{
+                                    flex: 1,
+                                    flexDirection: 'row', alignItems:'center', justifyContent:'flex-end'}}>
+
+                                    {
+                                        item.levelData.map(levelData => (
+                                            <Text
+                                                key={levelData.level.toString()}
+                                                style={{width:40,height:40,
+                                                    marginHorizontal:2,
+                                                    textAlign:'center',
+                                                    textAlignVertical:'center',
+                                                    borderRadius:20,
+                                                    color:levelData.isPlayed ? 'white' : '#444',
+                                                    backgroundColor: levelData.isPlayed? 'royalblue': '#ddd'}}>
+                                                {levelData.level}
+                                            </Text>
+                                        ))
+                                    }
+                                </View>
+                                </View>
                         </TouchableOpacity>
                     )} />
             </View>
@@ -52,7 +123,32 @@ class GameModes extends React.Component{
 };
 
 const styles = StyleSheet.create({
-    container: {}
+    container: {
+        flex:1,
+    },
+    gameModeContainer:{
+        backgroundColor:'#86ACF8',
+        color:'white',
+        borderWidth:2,
+        borderColor:'white',
+        height:90,
+        borderRadius:15,
+        marginHorizontal: 2,
+        marginVertical: 10,
+    }
 });
 
 export default GameModes;
+
+/*
+* <View
+                                style={{flex:1,flexDirection:'row',...styles.gameModeContainer,
+                                    marginHorizontal:2, borderWidth:2,borderColor:'#fff'}}>
+
+                                    <Image source={item.logo} style={{justifyContent:'flex-start',flex:1, width:null, height:null, resizeMode:'contain'}}/>
+
+
+                                <Text style={globalStyles.titleText}>{ item.category }</Text>
+                                <Text style={globalStyles.titleText}>{ item.category }</Text>
+                                <Text style={globalStyles.titleText}>{ item.category }</Text>
+                            </View>*/

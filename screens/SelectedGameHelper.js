@@ -46,6 +46,15 @@ export const toTime = time => {
     };
 };
 
+export const getTimeInSeconds = time => {
+    let {milliseconds, seconds, minutes} = time;
+    milliseconds = parseInt(milliseconds);
+    seconds = parseInt(seconds);
+    minutes = parseInt(minutes);
+
+    return seconds + (minutes * 60) + (milliseconds / 1000);
+};
+
 
 /*Font.loadAsync({
                 Ionicons: require("@expo/vector-icons/fonts/Ionicons.ttf"),

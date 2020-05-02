@@ -10,12 +10,13 @@ const FRUITS = 'Fruits';
 export const gameCategories= [CRICKET,ANIMALS, PLAYING_CARDS, SOCIAL_MEDIA, CARTOONS, FRUITS];
 
 export const gameModes = [
-    {key:1, category: CRICKET, categoryDescription:'Cricket', logo:''},
-    {key:2, category: ANIMALS, categoryDescription:'Animals', logo:''},
-    {key:3, category: PLAYING_CARDS, categoryDescription:'Playing Cards', logo:''},
-    {key:4, category:SOCIAL_MEDIA, categoryDescription:'Social Media', logo:''},
-    {key:5, category:CARTOONS, categoryDescription:'Cartoons', logo:''},
-    {key:6, category:FRUITS, categoryDescription:'Fruits', logo:''}];
+    {key:1, category: CRICKET, categoryDescription:'Cricket', logo:require('./../assets/cricket/CricketCardFaceUp.png'),},
+    {key:2, category: ANIMALS, categoryDescription:'Animals', logo:require('../assets/animals/AnimalCardFaceUp2.jpg')},
+    {key:3, category:SOCIAL_MEDIA, categoryDescription:'Social Media', logo:require('./../assets/socialMedia/SocialMediaFaceUp.jpg')},
+    {key:4, category:CARTOONS, categoryDescription:'Cartoons', logo:require('./../assets/cartoons/CartoonCardFaceUp.jpg')},
+    {key:5, category:FRUITS, categoryDescription:'Fruits', logo:require('../assets/fruits/FruitsCardFaceUp.png')},
+    {key:6, category: PLAYING_CARDS, categoryDescription:'Playing Cards', logo:require('./../assets/playingCards/PlayingCardDesign.png')},
+    ];
 
 export const cardsInformation = {
     [CRICKET] : {
@@ -48,8 +49,9 @@ export const cardsInformation = {
             {id:9,prop: require('./../assets/animals/Elephant.jpg')},
             {id:10,prop: require('./../assets/animals/Rat.jpg')},
             {id:11,prop: require('./../assets/animals/Kangaroo.jpg')},
-            {id:12,prop: require('./../assets/animals/Panda.jpg')},
-        ]
+            {id:12,prop: require('./../assets/animals/Fox.jpg')},
+        ],
+        faceUpImageUri: require('./../assets/animals/AnimalCardFaceUp2.jpg')
     },
     [PLAYING_CARDS] : {
         cardInfo: [
@@ -151,7 +153,7 @@ export const darkTheme = {
 };
 
 export const lightTheme =  {
-    bgColor: '#ddd', // background of class
+    bgColor: '#fff', // background of class
     color: '#444', // fontColor
     elementColor: '#a52a2aff' // background of element
 };

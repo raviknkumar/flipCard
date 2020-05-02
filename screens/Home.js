@@ -14,8 +14,6 @@ import {Container, Content, Button, Header, Footer} from "native-base";
 import GameHeader from "../components/GameHeader";
 import RNExitApp from 'react-native-exit-app';
 
-
-
 class Home extends Component{
 
     static navigationOptions = {
@@ -28,18 +26,28 @@ class Home extends Component{
             'Exit App',
             'Do you want to exit?',
             [
-                {text: 'No', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+                {text: 'No', onPress: () => null , style: 'cancel'},
                 {text: 'Yes', onPress: () => this.exitApp()},
             ],
             { cancelable: false });
         return true;
     };
 
-    navigateToAbout = () => {
-        this.props.navigation.navigate('About');
-    }
+    navigateToScreen = (screenName) => {
+
+        // clear handle back press before navigating
+        BackHandler.removeEventListener('hardwareBackPress', this.backAction);
+
+        // navigate to new screen
+        this.props.navigation.navigate(screenName);
+    };
 
     navigateToGameModes = () => {
+
+        // clear handle back press before navigating
+        BackHandler.removeEventListener('hardwareBackPress', this.backAction);
+
+        // navigate to new screen
         this.props.navigation.navigate('GameModes');
     }
 
@@ -56,6 +64,29 @@ class Home extends Component{
         this.state = {statusBarStyle : ['default','dark-content', 'light-content']};
     }
 
+    componentDidMount() {
+        console.log("Home Component Did Mount")
+        this._focusListener = this.props.navigation.addListener('didFocus', this._componentFocused);
+    }
+
+    _componentFocused = async () => {
+
+        console.log("Home Component Focused");
+        BackHandler.addEventListener("hardwareBackPress", this.backAction);
+    };
+
+    componentWillUnmount() {
+        console.log("Home Component Will UnMount");
+        BackHandler.removeEventListener("hardwareBackPress", this.backAction);
+        this._focusListener.remove();
+    }
+
+    // HANDLE BACK PRESS
+    backAction = () => {
+        this.handleExit();
+        return true;
+    };
+
     render() {
         return (
             <Container style={styles.container}>
@@ -71,20 +102,21 @@ class Home extends Component{
 
                     <ScrollView>
                         <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                            <TouchableOpacity style={styles.buttonContainer} onPress={()=> this.navigateToGameModes()}>
+                            <TouchableOpacity style={styles.buttonContainer} onPress={()=> this.navigateToScreen('GameModes')}>
                                 <Text style={styles.buttonText}>New Game</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.buttonContainer}>
+                            <TouchableOpacity style={styles.buttonContainer}
+                                onPress={() => this.navigateToScreen('Stats')}>
                                 <Text style={styles.buttonText}>Stats</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.buttonContainer} onPress={() => this.navigateToAbout()}>
+                            <TouchableOpacity style={styles.buttonContainer} onPress={() => this.navigateToScreen('About')}>
                                 <Text style={styles.buttonText}>About</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.buttonContainer} onPress={() => this.handleExit()}>
-                                <Text style={styles.buttonText}>Exit</Text>
+                            <TouchableOpacity style={styles.buttonContainer} onPress={() => this.navigateToScreen('Settings')}>
+                                <Text style={styles.buttonText}>Settings</Text>
                             </TouchableOpacity>
 
                         </View>

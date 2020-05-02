@@ -1,13 +1,20 @@
 import React, {PureComponent} from "react"
 import styled from "styled-components"
-import { Animated, TouchableOpacity, Dimensions, View, Text, StyleSheet, TouchableHighlight, TouchableNativeFeedback} from "react-native"
+import { Animated, TouchableOpacity, Dimensions, View, Text, StyleSheet, TouchableHighlight, Image} from "react-native"
 import {Card, CardItem, Button} from "native-base";
-import * as Icon from "@expo/vector-icons"
+import {Ionicons} from "@expo/vector-icons";
+
+import {darkTheme, lightTheme} from "../config/ResourceConfig";
 
 const screenHeight = Dimensions.get("window").height;
 
 class CustomModal extends PureComponent {
 
+    theme;
+    constructor(props){
+        super(props);
+        this.theme = darkTheme;
+    }
     state = {
         top: new Animated.Value(screenHeight)
     };
@@ -27,11 +34,11 @@ class CustomModal extends PureComponent {
     setLevelAndClose = (level) => {
         this.props.setLevel(level);
         this.closeModal()
-    }
+    };
 
     render() {
         return (
-            <AnimatedContainer style={{top: this.state.top}}>
+            <AnimatedContainer style={{top: this.state.top, backgroundColor:'#ddd'}}>
 
                 <View style={{height:100,backgroundColor: '#444', alignItems: 'center', justifyContent: 'center'}}>
                     <Text style={{color:'white', fontSize:24, fontWeight:'100'}}>Choose A Level</Text>
@@ -39,9 +46,9 @@ class CustomModal extends PureComponent {
 
                 <TouchableOpacity
                     onPress={this.closeModal}
-                    style={{position: "absolute", top: 73, left: "50%", marginLeft: -22, zIndex: 1}}>
+                    style={{position: "absolute", top: 80, left: "50%", marginLeft: -22, zIndex: 1}}>
                     <CloseView style={{elevation: 10}}>
-                        <Icon.Ionicons name='ios-close' size={36} color='blue'/>
+                        <Image source={require('./../assets/icons/close2.png')} style={{width:36,size:36,color:'blue'}}/>
                     </CloseView>
                 </TouchableOpacity>
 
@@ -49,22 +56,22 @@ class CustomModal extends PureComponent {
 
                     <AnimatedTouchable
                         onPress={() => {this.setLevelAndClose(1)}}>
-                        <Card style={{marginTop:10,borderRadius: 50, width: 100, height: 100}}>
-                            <Text style={{textAlign: 'center', fontSize: 60, marginTop: 10}}> 1 </Text>
+                        <Card style={{marginTop:10,borderRadius: 50, width: '100%', height: 70}}>
+                            <Text style={{textAlign: 'center', fontSize: 40, marginTop: 10}}> Easy </Text>
                         </Card>
                     </AnimatedTouchable>
 
                     <AnimatedTouchable
                         onPress={()=>{this.props.setLevel(2);this.closeModal()}}>
-                        <Card style={{marginTop:10,borderRadius: 50, width: 100, height: 100}}>
-                            <Text style={{textAlign: 'center', fontSize: 60, marginTop: 10}}>2</Text>
+                        <Card style={{marginTop:10,borderRadius: 50, width: '100%', height: 70}}>
+                            <Text style={{textAlign: 'center', fontSize: 40, marginTop: 10}}>Medium</Text>
                         </Card>
                     </AnimatedTouchable>
 
                     <AnimatedTouchable
                         onPress={()=>{this.props.setLevel(3);this.closeModal()}}>
-                        <Card style={{marginTop:10,borderRadius: 50, width: 100, height: 100}}>
-                            <Text style={{textAlign: 'center', fontSize: 60, marginTop: 10}}>3</Text>
+                        <Card style={{marginTop:10,borderRadius: 50, width: '100%', height: 70}}>
+                            <Text style={{textAlign: 'center', fontSize: 40, marginTop: 10}}>Hard</Text>
                         </Card>
                     </AnimatedTouchable>
 
@@ -115,9 +122,9 @@ const Header = styled.View`
 const Body = styled.View`
     height: ${screenHeight}px;
     display: flex;
-    flexDirection:row;
-    justifyContent: space-between;
+    justifyContent: flex-start;
     marginHorizontal: 10px;
+    marginTop: 20px;
 `
 
 const CloseView = styled.View`

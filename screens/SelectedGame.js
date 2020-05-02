@@ -10,8 +10,10 @@ import GameCardSelected from "../components/GameCardSelected";
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import {Menu, MenuOptions, MenuOption, MenuTrigger,} from 'react-native-popup-menu';
 import {Audio} from "expo-av";
-import {initializeCardInfo, getElementIn2dArray, areCardsSame, toTime} from "./SelectedGameHelper";
+import {initializeCardInfo, getElementIn2dArray, areCardsSame, toTime, getTimeInSeconds} from "./SelectedGameHelper";
 import {gameStyles} from "../styles/GameStyles";
+import Toast from "react-native-root-toast";
+import {StorageContext} from "../contexts/StorageContext";
 
 
 const width = Dimensions.get('window').width;
@@ -22,6 +24,7 @@ const CARD_REPEAT_FREQUENCY = 2; // Should be even only
 class SelectedGame extends Component
 {
     flipSound;
+    backgroundSound;
 
     // Constructor
     constructor (props) {
@@ -52,25 +55,33 @@ class SelectedGame extends Component
             resourcesLoaded: false,
             isMuted: false,
         };
+        this.backgroundSound = null;
+        this.flipSound = null;
+    };
+
+    static contextType = StorageContext;
+
+    addDataToStorage = (gameInfo) => {
+
     };
 
     // LIFE CYCLE HOOKS
 
     async componentDidMount() {
 
-        BackHandler.addEventListener("hardwareBackPress", this.backAction);
+        console.log("SelectedGame Component Did Mount");
 
-        //this._focusListener = this.props.navigation.addListener('didFocus', this._componentFocused);
-        this.initializeCardInformation();
-        this.startTimer();
+        /* As this Component Mounts by navigation.navigate
+        the below line adds the listener for didFoucs
+        and it will be called upon addListener. So no initailization code is used in componentDidMount*/
 
-        // USed For testing
-        setTimeout(()=>{this.handleGameComplete([])}, 20000);
-
-        await this.createSounds();
+        this._focusListener = this.props.navigation.addListener('didFocus', this._componentFocused);
     }
 
-    async _componentFocused() {
+    _componentFocused = async () => {
+
+        console.log("SelectedGame Component Focused");
+        BackHandler.addEventListener("hardwareBackPress", this.backAction);
 
         // Set Mute
         let muted = this.state.isMuted;
@@ -85,22 +96,34 @@ class SelectedGame extends Component
         if (this.state.previousCardIndex !== -1) {
             this.refs['card' + this.state.previousCardIndex].flipCard();
         }
+
+        // create Sounds
         await this.createSounds();
+
+        // initialize Card Info
         this.initializeCardInformation();
+
+        // Set muted to previous muted as initializeCardInformation refresh the stateData
         this.setState({isMuted: muted});
+
+        // startTimer
         this.startTimer();
-
-
-        setTimeout(() => {
-            this.handleGameComplete([])
-        }, 5000);
-    }
+    };
 
     async componentWillUnmount() {
 
+        console.log("SelectedGame Component Will UnMount");
+
+        // Remove Back press Handler added
         BackHandler.removeEventListener("hardwareBackPress", this.backAction);
+
+        // Remove didFocus Listener added
+        this._focusListener.remove();
+
+        // clear timer
         clearInterval(this.state.timer);
-        // CLear Audio
+
+        // Clear Audio
         await this.unloadSounds();
     }
 
@@ -174,7 +197,6 @@ class SelectedGame extends Component
     restartLevel = async () => {
         await this.createSounds();
         this.restartGame();
-        setTimeout(()=>{this.handleGameComplete([])}, 5000);
     };
 
     restartGame = () =>{
@@ -241,7 +263,6 @@ class SelectedGame extends Component
                 successAttempts +=2;
                 matchedCards  = [...matchedCards, currentCardIndex, previousCardIndex];
                 console.log("Cards Clicked Same, Matched Cards Are ", matchedCards.length);
-                this.handleGameComplete(matchedCards);
             }
 
             items[rowClicked][colClicked] = {...currCard};
@@ -249,15 +270,13 @@ class SelectedGame extends Component
             previousCardIndex = -1; // Reset it back
             this.setState({cardInfo: items,
                 previousCardIndex: previousCardIndex,
-                totalAttempts : totalClicks,
                 remainingCards : remainingCards,
                 successAttempts: successAttempts,
                 failureAttempts: failureAttempts,
-                matchedCards: matchedCards});
+                matchedCards: matchedCards}, this.handleGameComplete);
         }
         else {
-            //
-            this.setState({cardInfo: items, previousCardIndex: currentCardIndex, totalAttempts : totalClicks});
+            this.setState({cardInfo: items, previousCardIndex: currentCardIndex});
         }
     };
 
@@ -265,20 +284,45 @@ class SelectedGame extends Component
         return this.state.previousCardIndex !== -1 && this.state.previousCardIndex !== currentCardIndex;
     };
 
-    async handleGameComplete(matchedCards) {
-        if (true) {
+    async handleGameComplete() {
+        if(this.state.matchedCards.length === this.state.totalCards){
             BackHandler.removeEventListener("hardwareBackPress", this.backAction);
             this.stopTimer();
             // clear back press
 
             await this.unloadSounds();
 
+            // store data for stats
+
+            try {
+                 let {addDataToLevel} = this.context;
+                await addDataToLevel({
+                    level: this.state.level,
+                    levelDescription: this.state.level,
+                    category: this.state.category,
+                    time: getTimeInSeconds(this.state.time),
+                    correctSelections: (this.state.successAttempts) / 2,
+                    inCorrectSelections: (this.state.failureAttempts) / 2,
+                });
+
+                let toast = Toast.show('Stats Data Added Successfully', {
+                    duration: Toast.durations.SHORT,
+                    position: Toast.positions.TOP,
+                    shadow: true,
+                    animation: true,
+                    hideOnPress: true,
+                    delay: 0
+                });
+            } catch (e) {
+                console.log("Error in Adding Data To Storage", e);
+            }
+
             this.props.navigation.navigate('LevelComplete', {
                 level: this.state.level,
                 category: this.state.category,
-                totalSelections: (this.state.totalAttempts + 2) / 2,
-                correctSelections: (this.state.successAttempts + 2) / 2,
-                inCorrectSelections: (this.state.failureAttempts + 2) / 2,
+                totalSelections: (this.state.successAttempts + this.state.failureAttempts) / 2,
+                correctSelections: (this.state.successAttempts) / 2,
+                inCorrectSelections: (this.state.failureAttempts) / 2,
                 time: this.state.time,
                 restartLevel: this.restartLevel
             });
@@ -299,14 +343,17 @@ class SelectedGame extends Component
         this.setState({isPaused:false},this.startTimer);
     };
 
-    exitGame = () => {
-        this.stopTimer();
-        this.setState({isPaused:false});
+    exitGame = async () => {
+
+        // Used to close Modal
+        this.setState({isPaused:false}, this.stopTimer);
+
+        await this.unloadSounds();
         const resetAction = StackActions.reset({
             index: 1,
             actions: [
-                NavigationActions.navigate({ routeName: 'Home' }),
-                NavigationActions.navigate({ routeName: 'GameModes' })
+                NavigationActions.navigate({routeName: 'Home'}),
+                NavigationActions.navigate({routeName: 'GameModes'})
             ]
         });
         this.props.navigation.dispatch(resetAction);
@@ -473,17 +520,28 @@ class SelectedGame extends Component
     };
 
     unloadSounds = async () => {
-        console.log('Clear Sounds');
-        try {
-            await Promise.all([
-                this.backgroundSound.stopAsync(),
-                this.backgroundSound.unloadAsync(),
-                this.flipSound.unloadAsync()
-            ]);
-        } catch (error) {
-            console.log("Error In Unloading Sounds", error);
+
+        console.log('Unload Sounds');
+
+        if (this.backgroundSound != null) {
+            try {
+                await Promise.all([this.backgroundSound.stopAsync(),this.backgroundSound.unloadAsync()]);
+                this.backgroundSound = null;
+            } catch (e) {
+                console.log("Error in Background Sound StopAsync or Unload Async")
+            }
+        }
+
+        if (this.flipSound != null) {
+            try {
+                await this.flipSound.unloadAsync();
+                this.flipSound = null;
+            } catch (e) {
+                console.log("Error in FlipSound StopAsync or Unload Async")
+            }
         }
     };
+
 
     // HANDLE BACK PRESS
     backAction = () => {
@@ -494,14 +552,15 @@ class SelectedGame extends Component
                 style: "cancel"
             },
             {
-                text: "QUIT", onPress: () => {this.exitGame()}
+                //text: "QUIT", onPress: () => {this.exitGame()}
+                text: "QUIT", onPress: () => {this.props.navigation.goBack()}
             }
         ]);
         return true;
     };
 
     render() {
-            return (
+        return (
                 <Container>
 
                     <Header>
@@ -527,10 +586,10 @@ class SelectedGame extends Component
 
                             <Menu onSelect={value => this.onOptionSelect(value)} ref={this.onRef}>
                                 <MenuTrigger>
-                                    <Ionicons
-                                        name={Platform.OS === 'ios'? 'ios-more' : 'md-more'} style={{
-                                        fontSize: 35, width: 50, marginRight: 2, textAlign: 'center',
-                                        alignItems:'center',
+                                    <Image
+                                        source={require('./../assets/icons/baseline_more_vert_white_24dp.png')}
+                                        style={{
+                                        width: 50, marginRight: 2, alignItems:'center',
                                         fontWeight: '700', color: 'white'
                                     }}/>
                                 </MenuTrigger>
@@ -562,11 +621,8 @@ class SelectedGame extends Component
                                     justifyContent: 'space-around'
                                 }}>
 
-                                    <Icon name='pause' style={{
-                                        fontSize: 60,
-                                        fontWeight: '700',
-                                        color: '#bbb',
-                                        textAlign: 'center'
+                                    <Image source={require('../assets/icons/baseline_pause_white_48dp.png')} style={{
+                                        paddingLeft: 20,
                                     }}/>
 
                                     <Text style={{color: 'white', fontSize: 32, fontWeight: '700'}}>
@@ -579,12 +635,14 @@ class SelectedGame extends Component
                                         width: 300, height: 200, alignItems: 'center', justifyContent: 'space-around'
                                     }}>
                                         <Button success style={{paddingHorizontal: 10}} onPress={this.resumeGame}>
-                                            <Icon name='play'/>
+                                            <Image source={require('../assets/icons/baseline_play_arrow_white_24dp.png')}
+                                                   style={{width:24, paddingRight:5}}/>
                                             <Text>Resume</Text>
                                         </Button>
 
                                         <Button danger style={{paddingHorizontal: 10}} onPress={this.exitGame}>
-                                            <Icon name='exit'/>
+                                            <Image source={require('../assets/icons/baseline_exit_to_app_white_24dp.png')}
+                                                   style={{width:24, paddingRight:5}}/>
                                             <Text>Exit Game</Text>
                                         </Button>
                                     </View>

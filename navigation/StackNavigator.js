@@ -6,8 +6,8 @@ import {createAppContainer} from "react-navigation";
 import GameModes from "../screens/GameModes";
 import SelectedGame from "../screens/SelectedGame";
 import LevelComplete from "../screens/LevelComplete";
-import SoundDemo from "../screens/SoundDemo";
-import TestStorageContext from "../screens/TestStoargeContext";
+import Settings from "../screens/Settings";
+import Stats from "../screens/Stats";
 
 const screens = {
 
@@ -18,7 +18,10 @@ const screens = {
         screen: About,
     },
     GameModes: {
-        screen: GameModes
+        screen: GameModes,
+    },
+    Stats:{
+        screen: Stats,
     },
     SelectedGame :{
         screen: SelectedGame,
@@ -31,14 +34,15 @@ const screens = {
         navigationOptions:{
             headerShown:false
         }
+    },Settings:{
+        screen:Settings,
     }
 };
 
 // home stack navigator screens
 const HomeStack = createStackNavigator(screens, {
     defaultNavigationOptions: {
-        headerTintColor: '#444',
-        headerStyle: { backgroundColor: '#eee', height: 60 }
+
     }
 });
 

@@ -11,6 +11,7 @@ const StorageContextProvider = (props) => {
 
     const addDataToLevel = async (gameDataObtained) => {
 
+        //console.log("Add Data To Level", gameDataObtained);
         let level = gameDataObtained.level;
         let levelDescription = gameDataObtained.levelDescription;
         let category = gameDataObtained.category;
@@ -22,7 +23,7 @@ const StorageContextProvider = (props) => {
 
             try {
                 dataInStorage = await AsyncStorage.getItem(key);
-                console.log("Existing Data", dataInStorage);
+                // console.log("Existing Data", dataInStorage);
                 if(dataInStorage) {
                     gameLevelDataExisting = JSON.parse(dataInStorage);
                 } else {
@@ -36,33 +37,39 @@ const StorageContextProvider = (props) => {
             // No Game Summary Exists
             if (!gameLevelDataExisting) {
 
-                console.log("No Data Exists");
+                // console.log("No Data Exists");
                 // created level wise summary
                 gameLevelDataExisting = new LevelData(category, level, levelDescription, 1);
 
             }
             // Already Level data exists
             else{
-                console.log("Data Exists", gameLevelDataExisting);
+                // console.log("Data Exists", gameLevelDataExisting);
                 gameLevelDataExisting.gamesPlayed = gameLevelDataExisting.gamesPlayed + 1;
             }
-            gameLevelDataExisting.minTime = calculateMinTime(gameLevelDataExisting.minTime, gameDataObtained.time);
+            let newMinCalculated = calculateMinTime(gameLevelDataExisting.minTime, gameDataObtained.time);
+            if(newMinCalculated){
+                // console.log("Updating Min", newMinCalculated);
+                gameLevelDataExisting.minTime = newMinCalculated;
+                gameLevelDataExisting.correctSelections = gameDataObtained.correctSelections;
+                gameLevelDataExisting.inCorrectSelections = gameDataObtained.inCorrectSelections;
+            }
             gameLevelDataExisting.averageTime = calculateAverageTime(gameLevelDataExisting.averageTime, gameDataObtained.time, gameLevelDataExisting.gamesPlayed);
             gameLevelDataExisting.averageTimeReadable = getTimeAsReadable(gameLevelDataExisting.averageTime);
             gameLevelDataExisting.minTimeReadable = getTimeAsReadable(gameLevelDataExisting.minTime);
 
-            console.log("Game Data New", gameLevelDataExisting);
+            // console.log("Game Data New", gameLevelDataExisting);
 
             // persisting game Summary
             let response;
 
             AsyncStorage.setItem(key, JSON.stringify(gameLevelDataExisting), () => {
                 response = gameLevelDataExisting;
-                console.warn('Done!')
+                //console.log('Done!')
             });
 
         } catch (error) {
-            console.warn("Error Updatinf LevelWise Data Stats: ", error)
+            console.warn("Error Updating LevelWise Data Stats: ", error)
         }
     };
 
@@ -72,12 +79,12 @@ const StorageContextProvider = (props) => {
         let response = {};
         let allKeys = getAllKeys();
 
-        let res = await AsyncStorage.getAllKeys();
-        console.log("Keys in DB", res);
-        res = []
+        //let res = await AsyncStorage.getAllKeys();
+        //console.log("Keys in DB", res);
+        let res = [];
 
         const responseArray = await AsyncStorage.multiGet(allKeys);
-        console.log("Resp Array", responseArray);
+        //console.log("Resp Array", responseArray);
 
         responseArray.map((result, i) => {
             // get at each store's key/value so you can work with it
@@ -91,9 +98,11 @@ const StorageContextProvider = (props) => {
             let key = keyValue.key;
             let dataFromKey =getDataFromKey(key);
             response[dataFromKey.category] = response[dataFromKey.category] ? response[dataFromKey.category] : {};
-            response[dataFromKey.category][dataFromKey.level] = keyValue.value ? JSON.parse(keyValue.value) : null;
+            response[dataFromKey.category][dataFromKey.level] =
+                keyValue.value ? JSON.parse(keyValue.value) :
+                LevelData.createDummyObject(dataFromKey.category, dataFromKey.level, dataFromKey.level);
         }
-        console.log("Response ", response);
+        // console.log("Response ", response);
         return response;
     };
 
@@ -103,7 +112,14 @@ const StorageContextProvider = (props) => {
     };
 
     const clearData = async () => {
-        await AsyncStorage.clear();
+        console.log("Clearing Storage Data");
+        try {
+            await AsyncStorage.clear();
+            return true;
+        } catch (e) {
+            console.log("Error In CLearing Data", e);
+            return false;
+        }
     };
 
     // Helper
@@ -167,12 +183,27 @@ class LevelData {
         this.gamesPlayed = gamesPlayed;
         this.level = level;
     }
+
+    static createDummyObject(category, level, levelDescription) {
+        return {
+            category:category,
+            level:level,
+            levelDescription: level,
+            gamesPlayed:0,
+            minTime:'NA',
+            minTimeReadable:'--:--',
+            averageTime:'NA',
+            averageTimeReadable:'--:--',
+            correctSelections:0,
+            inCorrectSelections:0,
+        }
+    }
 }
 
 // Helper, Send Updated totalGames
 const calculateAverageTime = (oldTime, newTime, totalGames) => {
 
-    console.log("Existing and New And Total", oldTime, " ", newTime, " ", totalGames);
+    //console.log("Existing and New And Total", oldTime, " ", newTime, " ", totalGames);
     if(!oldTime || totalGames === 1){
         console.log("Update With New");
          return newTime;
@@ -181,8 +212,8 @@ const calculateAverageTime = (oldTime, newTime, totalGames) => {
         let oldGamesPlayed = (totalGames - 1);
         average = (average * oldGamesPlayed) + newTime;
         average = average / totalGames;
-        console.log("Average*oldGames + newTime / totalGames",oldTime,"*",(totalGames-1),'+',newTime , "/", totalGames);
-        console.log("Calculate With New", average.toFixed(2));
+        //console.log("Average*oldGames + newTime / totalGames",oldTime,"*",(totalGames-1),'+',newTime , "/", totalGames);
+        //console.log("Calculate With New", average.toFixed(2));
         return average.toFixed(2);
     }
 };
@@ -199,13 +230,13 @@ const getTimeAsReadable = (time) => {
 };
 
 const calculateMinTime = (oldMinTime, newMinTime) => {
-    console.log("Existing and New", oldMinTime, " ", newMinTime);
+    //console.log("Existing and New", oldMinTime, " ", newMinTime);
     if (!oldMinTime || oldMinTime > newMinTime) {
-        console.log("MinTime Update With New");
+        //console.log("MinTime Update With New");
         return newMinTime;
     } else {
-        console.log("MinTime Stays The Same");
-        return oldMinTime;
+        //console.log("MinTime Stays The Same");
+        return null;
     }
 };
 

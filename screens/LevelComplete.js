@@ -1,8 +1,9 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useContext} from 'react';
 import {darkTheme} from "../config/ResourceConfig";
 import {StyleSheet, View, Text, TouchableOpacity, BackHandler, ToastAndroid} from 'react-native';
 import {Button, Content, Footer, Container, Header, Left, Right, FooterTab, Icon, Body} from "native-base";
 import {globalStyles} from "../styles/global";
+import {StorageContext} from "../contexts/StorageContext";
 
 
 const LevelComplete = (props) => {
@@ -22,11 +23,21 @@ const LevelComplete = (props) => {
     }, []);
 
     const goBack = () =>{
-        props.navigation.state.params.restartLevel();
+        //props.navigation.state.params.restartLevel();
         props.navigation.goBack();
     };
 
+    const calculatePercentage = () => {
+        let correct = props.navigation.getParam('correctSelections');
+        let wrong = props.navigation.getParam('inCorrectSelections');
+        let total = correct + wrong;
+        let percentage = (correct / total) * 100;
+        return percentage.toFixed(2) + '%';
+    }
+
+    console.log("COntext: ",useContext(StorageContext))
     return (
+
         <Container style={{...styles.container, flexDirection:'column'}}>
 
                 <Text style={{color: darkTheme.color, fontSize:34, fontWeight: '500', textAlign: 'center'}}>
@@ -69,16 +80,9 @@ const LevelComplete = (props) => {
 
                 </View>
 
-                <Text style={{color: darkTheme.color}}>GameStats</Text>
-                <Text style={{color: darkTheme.color}}>category: {props.navigation.getParam('category')}</Text>
-                <Text style={{color: darkTheme.color}}>totalSelections: {props.navigation.getParam('totalSelections')}</Text>
-
                 <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
                     <Text style={{color:'white', textAlign:'center', fontSize:24, fontWeight:'300'}}>
-                        {
-                            (props.navigation.getParam('correctSelections') * 100) /
-                            (props.navigation.getParam('correctSelections') + props.navigation.getParam('inCorrectSelections'))
-                        }%
+                        {calculatePercentage()}
                     </Text>
                 </View>
 
