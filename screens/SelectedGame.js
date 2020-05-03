@@ -84,7 +84,13 @@ class SelectedGame extends Component
         BackHandler.addEventListener("hardwareBackPress", this.backAction);
 
         // Set Mute
-        let muted = this.state.isMuted;
+        //let muted = this.state.isMuted;
+        // Sound is true => muted is false, so add ! for it
+        let soundStatus = await this.context.getSound();
+        let muted = !soundStatus;
+
+        // Set muted to previous muted as initializeCardInformation refresh the stateData
+        this.setState({isMuted: muted});
 
         // toggle all selected cards
         // flip all Matched
@@ -102,9 +108,6 @@ class SelectedGame extends Component
 
         // initialize Card Info
         this.initializeCardInformation();
-
-        // Set muted to previous muted as initializeCardInformation refresh the stateData
-        this.setState({isMuted: muted});
 
         // startTimer
         this.startTimer();
@@ -126,7 +129,6 @@ class SelectedGame extends Component
         // Clear Audio
         await this.unloadSounds();
     }
-
 
     // Init METHODS
     initializeCardInformation(){
@@ -162,7 +164,6 @@ class SelectedGame extends Component
             cardValuesToApply2d.push(cardValue1d);
         }
 
-        //let cardInfo = this.initializeCardInfo(cardValuesToApply2d, faceUpImageUri);
         let cardInfo = initializeCardInfo(cardValuesToApply2d, faceUpImageUri);
 
         this.setState({
@@ -189,7 +190,6 @@ class SelectedGame extends Component
             restartGame: false,
             isPaused: false,
             resourcesLoaded: false,
-            isMuted: false,
         });
     }
 
@@ -305,14 +305,6 @@ class SelectedGame extends Component
                     inCorrectSelections: (this.state.failureAttempts) / 2,
                 });
 
-                let toast = Toast.show('Stats Data Added Successfully', {
-                    duration: Toast.durations.SHORT,
-                    position: Toast.positions.TOP,
-                    shadow: true,
-                    animation: true,
-                    hideOnPress: true,
-                    delay: 0
-                });
             } catch (e) {
                 console.log("Error in Adding Data To Storage", e);
             }
@@ -398,6 +390,10 @@ class SelectedGame extends Component
         else if(value === 2){
             this.restartGame();
         }
+        // Exit Game
+        else if(value === 3){
+            this.exitGame();
+        }
 
         this.menu.close();
     }
@@ -437,6 +433,7 @@ class SelectedGame extends Component
                     isLooping: false,
                 },
             );
+
             this.flipSound = sound;
             console.log("Created Flip Sound ", this.flipSound !== null);
         } catch (e) {
@@ -452,9 +449,11 @@ class SelectedGame extends Component
                 {
                     shouldPlay: shouldPlay,
                     isLooping: isLooping,
+                    isMuted: this.state.isMuted
                 },
             );
             this.backgroundSound = sound;
+
             console.log("Created Sound ", this.backgroundSound !== null);
             this.setState({
                 playingStatus: 'playing'
@@ -514,6 +513,7 @@ class SelectedGame extends Component
     _onMutePressed = async () => {
         if (this.backgroundSound != null) {
             let isMuted = this.state.isMuted;
+            await this.context.toggleSound(!isMuted);
             await this.backgroundSound.setIsMutedAsync(!isMuted);
             this.setState({isMuted: !isMuted});
         }
@@ -560,6 +560,7 @@ class SelectedGame extends Component
     };
 
     render() {
+        console.log("Is Muted ", this.state.isMuted);
         return (
                 <Container>
 
@@ -589,8 +590,7 @@ class SelectedGame extends Component
                                     <Image
                                         source={require('./../assets/icons/baseline_more_vert_white_24dp.png')}
                                         style={{
-                                        width: 50, marginRight: 2, alignItems:'center',
-                                        fontWeight: '700', color: 'white'
+                                        width: 30, height:40, marginRight: 2, alignItems:'center', justifyContent:'flex-start'
                                     }}/>
                                 </MenuTrigger>
                                 <MenuOptions>
@@ -600,6 +600,10 @@ class SelectedGame extends Component
                                     <View style={gameStyles.divider}/>
                                     <MenuOption value={2}>
                                         <Text style={{padding:5, fontWeight:'200'}}>Restart</Text>
+                                    </MenuOption>
+                                    <View style={gameStyles.divider}/>
+                                    <MenuOption value={3}>
+                                        <Text style={{padding:5, fontWeight:'200', marginBottom:3}}>Exit</Text>
                                     </MenuOption>
                                 </MenuOptions>
                             </Menu>
@@ -632,8 +636,8 @@ class SelectedGame extends Component
 
                                 <CardItem>
                                     <View style={{
-                                        width: 300, height: 200, alignItems: 'center', justifyContent: 'space-around'
-                                    }}>
+                                        width: 300, height: 200, alignItems: 'center', justifyContent: 'space-around'}}>
+
                                         <Button success style={{paddingHorizontal: 10}} onPress={this.resumeGame}>
                                             <Image source={require('../assets/icons/baseline_play_arrow_white_24dp.png')}
                                                    style={{width:24, paddingRight:5}}/>

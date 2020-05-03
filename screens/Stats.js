@@ -10,7 +10,7 @@ import Toast from 'react-native-root-toast';
 const Stats = (props) => {
 
     let [categories, setCategories] = useState([]);
-    let [category, setCategory] = useState('Animals');
+    let [category, setCategory] = useState('Cricket');
     let [theme, setTheme] = useState(darkTheme);
     let [storedGameData, setStoredGameData]  = useState([]);
     let [selectedGameData, setSelectedGameData] = useState([]);
@@ -76,6 +76,7 @@ const Stats = (props) => {
                 let resp = await getAllLevelsData();
                 //console.log("Obtained Game Data ", resp);
                 setStoredGameData(resp);
+                setSelectedGameData(resp[category]);
             } catch (e) {
                 console.log("Error In Fetching GameData: ", e);
             }
@@ -142,7 +143,8 @@ const Stats = (props) => {
 
                 <View style={{marginRight:10, flexDirection:'row'}}>
                 <ModalDropdown
-                    defaultValue={'Select Category'}
+
+                    defaultValue={category}
 
                     dropdownStyle={{width: '90%', marginHorizontal: '2%',}}
 

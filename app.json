@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "my game",
-    "slug": "my-game",
+    "name": "flip card",
+    "slug": "flip-card",
     "platforms": [
       "ios",
       "android"
@@ -16,8 +16,8 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain"
+      "image": "./assets/splashNew.png",
+      "resizeMode": "cover"
     },
     "updates": {
       "fallbackToCacheTimeout": 0

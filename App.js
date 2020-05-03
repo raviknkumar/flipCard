@@ -8,7 +8,7 @@ import Home from "./screens/Home";
 // your entry point
 import { MenuProvider } from 'react-native-popup-menu';
 import {AppLoading} from "expo";
-import {cardsInformation} from "./config/ResourceConfig";
+import {cardsInformation, gameCategories} from "./config/ResourceConfig";
 import * as Font from 'expo-font';
 import {Asset} from "expo-asset";
 import {MaterialIcons, Ionicons} from "@expo/vector-icons";
@@ -22,18 +22,23 @@ export default function App() {
 
     let category = 'Cricket';
 
-    console.log("Load Resources");
-
-    let cardInfoArray = [...cardsInformation[category].cardInfo];
     let imagesToCache = [];
-    for (const cardInfo of cardInfoArray) {
-      imagesToCache = [...imagesToCache, cardInfo.prop];
+    for (const gameCategory of gameCategories) {
+
+      console.log("Category", gameCategory);
+
+      let cardInfoArray = [...cardsInformation[category].cardInfo];
+      for (const cardInfo of cardInfoArray) {
+        imagesToCache = [...imagesToCache, cardInfo.prop];
+      }
+
+      let cardFaceUp = cardsInformation[category].faceUpImageUri;
+      if(cardFaceUp){
+        imagesToCache = [...imagesToCache, cardFaceUp];
+      }
     }
 
-    let cardFaceUp = cardsInformation[category].faceUpImageUri;
-    if(cardFaceUp){
-      imagesToCache = [...imagesToCache, cardFaceUp];
-    }
+    console.log("Load Resources");
 
 
     await Font.loadAsync({
@@ -42,8 +47,6 @@ export default function App() {
          FontAwesome: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.ttf"),
          IonIcons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"),
       });
-
-    //await Font.loadAsync([Ionicons.font,MaterialIcons.font])
 
     return  Promise.all([
       Asset.loadAsync(imagesToCache),

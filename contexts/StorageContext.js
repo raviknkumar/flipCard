@@ -7,6 +7,49 @@ export const StorageContext = createContext();
 // Store Data as GAME_LEVEL wise
 const StorageContextProvider = (props) => {
 
+
+    // SOUND
+    const toggleSound = async (soundValue) => {
+
+        console.log("Toggle Sound", soundValue);
+        const key = 'sound';
+        let resp = null;
+        let sound= true;
+        try {
+            sound = await AsyncStorage.getItem(key);
+            if(sound) {
+                sound = !JSON.parse(sound);
+                //console.log("Updated Old, New Value is", sound);
+            } else {
+                //console.log("No Value Found, Set to default", soundValue)
+                sound = soundValue;
+            }
+            await AsyncStorage.setItem(key, JSON.stringify(sound));
+            return await getSound();
+        }
+        catch(e){
+            console.log("Got Error");console.warn(e);
+        }
+    };
+
+    const getSound = async () => {
+
+        console.log("Get Sound");
+        let key= 'sound';
+        try{
+            let sound = await AsyncStorage.getItem(key);
+            //console.log("Sound :", sound);
+            if(sound){
+                return JSON.parse(sound);
+            } else {
+                return true;
+            }
+        } catch (e) {
+            console.log("Error in Getting Sound", e);
+        }
+    };
+
+
     // methods
 
     const addDataToLevel = async (gameDataObtained) => {
@@ -113,8 +156,9 @@ const StorageContextProvider = (props) => {
 
     const clearData = async () => {
         console.log("Clearing Storage Data");
+        const keys = getAllKeys();
         try {
-            await AsyncStorage.clear();
+            await AsyncStorage.multiRemove(keys);
             return true;
         } catch (e) {
             console.log("Error In CLearing Data", e);
@@ -153,7 +197,9 @@ const StorageContextProvider = (props) => {
     // Render
 
     return (
-        <StorageContext.Provider value={{ addDataToLevel: addDataToLevel, getAllLevelsData: getAllLevelsData, clearData: clearData}}>
+        <StorageContext.Provider value={{
+            toggleSound: toggleSound, getSound: getSound,
+            addDataToLevel: addDataToLevel, getAllLevelsData: getAllLevelsData, clearData: clearData}}>
             {props.children}
         </StorageContext.Provider>
     );

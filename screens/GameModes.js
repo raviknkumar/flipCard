@@ -6,6 +6,8 @@ import CustomModal from "./CustomModal";
 import Header from "../components/header";
 import {levels} from "../config/ResourceConfig";
 import {StorageContext} from "../contexts/StorageContext";
+import {Card} from "native-base";
+import Spinner from "../components/Spinner";
 
 
 class GameModes extends React.Component{
@@ -20,22 +22,39 @@ class GameModes extends React.Component{
             levelSelected:0,
             categorySelected:'',
             gameData:[],
+            dataLoaded: false
         };
         this.theme = darkTheme;
     }
 
     async componentDidMount() {
 
+        console.log("GameModes Component Did Mount");
+        this._focusListener = this.props.navigation.addListener('didFocus', this._componentFocused);
+    }
+
+    _componentFocused = async () => {
+        console.log("GameModes Focussed");
+
+        this.setState({dataLoaded: false});
+        console.log("This DataLoaded", this.state.dataLoaded);
         // Fetch Data From AsyncStorage
         let {getAllLevelsData} = this.context;
         let gameData = await getAllLevelsData();
-        this.setState({gameData}, this.processLevelData);
+        this.setState({gameData, dataLoaded: true}, this.processLevelData);
+    };
+
+    componentWillUnmount() {
+        console.log("GameModes Component Will Unmount");
+        this._focusListener.remove();
     }
 
     /*
     * maps Whether user has played the level or not
     */
     processLevelData = () => {
+
+        console.log("ProcessData: This DataLoaded", this.state.dataLoaded);
         let colorInfo = [];
         let i=0;
         gameModes.map(item => {
@@ -73,6 +92,7 @@ class GameModes extends React.Component{
             <View style={{...styles.container,backgroundColor:this.theme.bgColor}}>
 
                 <CustomModal ref={"customModal"} setLevel={this.setLevel}/>
+                <Spinner visible={!this.state.dataLoaded}/>
 
                 <FlatList
                     keyExtractor={item => item.gameMode.key.toString()}
@@ -96,7 +116,6 @@ class GameModes extends React.Component{
                                 <View style={{
                                     flex: 1,
                                     flexDirection: 'row', alignItems:'center', justifyContent:'flex-end'}}>
-
                                     {
                                         item.levelData.map(levelData => (
                                             <Text

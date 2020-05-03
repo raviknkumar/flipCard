@@ -9,6 +9,11 @@ import LevelComplete from "../screens/LevelComplete";
 import Settings from "../screens/Settings";
 import Stats from "../screens/Stats";
 
+// use initialRouteName after all the screen as options
+//   ,
+//   {
+//     initialRouteName: "Home"
+//   }
 const screens = {
 
     Home: {
