@@ -48,7 +48,7 @@ class CustomModal extends PureComponent {
                     onPress={this.closeModal}
                     style={{position: "absolute", top: 80, left: "50%", marginLeft: -22, zIndex: 1}}>
                     <CloseView style={{elevation: 10}}>
-                        <Image source={require('./../assets/icons/close2.png')} style={{width:36,size:36,color:'blue'}}/>
+                        <Image source={require('./../assets/icons/close2.png')} style={{width:36,height:36}}/>
                     </CloseView>
                 </TouchableOpacity>
 

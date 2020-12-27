@@ -28,8 +28,7 @@ class GameModes extends React.Component{
     }
 
     async componentDidMount() {
-
-        console.log("GameModes Component Did Mount");
+        //console.log("GameModes Component Did Mount");
         this._focusListener = this.props.navigation.addListener('didFocus', this._componentFocused);
     }
 
@@ -37,7 +36,7 @@ class GameModes extends React.Component{
         console.log("GameModes Focussed");
 
         this.setState({dataLoaded: false});
-        console.log("This DataLoaded", this.state.dataLoaded);
+        //console.log("This DataLoaded", this.state.dataLoaded);
         // Fetch Data From AsyncStorage
         let {getAllLevelsData} = this.context;
         let gameData = await getAllLevelsData();
@@ -45,7 +44,7 @@ class GameModes extends React.Component{
     };
 
     componentWillUnmount() {
-        console.log("GameModes Component Will Unmount");
+        console.log("GameModes Component Will Unmount refres");
         this._focusListener.remove();
     }
 
@@ -54,7 +53,7 @@ class GameModes extends React.Component{
     */
     processLevelData = () => {
 
-        console.log("ProcessData: This DataLoaded", this.state.dataLoaded);
+        //console.log("ProcessData: This DataLoaded", this.state.dataLoaded);
         let colorInfo = [];
         let i=0;
         gameModes.map(item => {
@@ -88,6 +87,7 @@ class GameModes extends React.Component{
     };
 
     render() {
+        
         return (
             <View style={{...styles.container,backgroundColor:this.theme.bgColor}}>
 
@@ -102,8 +102,6 @@ class GameModes extends React.Component{
                             style={{flexDirection:'row'}}
                             onPress={() => {this.openModal(item.gameMode)}}>
                             <View style={{
-                                flex: 1,
-                                flexDirection: 'row',
                                 ...styles.gameModeContainer,
                             }}>
                                 <View>
@@ -111,7 +109,7 @@ class GameModes extends React.Component{
                                         borderRadius:5,
                                         resizeMode:'contain'}}/>
                                 </View>
-                                <Text style={{...globalStyles.buttonText, marginHorizontal:10}}>{ item.gameMode.category }</Text>
+                                <Text style={{...styles.gameCategory}}>{ item.gameMode.category }</Text>
 
                                 <View style={{
                                     flex: 1,
@@ -146,6 +144,8 @@ const styles = StyleSheet.create({
         flex:1,
     },
     gameModeContainer:{
+        flex: 1,
+        flexDirection: 'row',
         backgroundColor:'#86ACF8',
         color:'white',
         borderWidth:2,
@@ -154,20 +154,15 @@ const styles = StyleSheet.create({
         borderRadius:15,
         marginHorizontal: 2,
         marginVertical: 10,
+    },
+    gameCategory: {
+        textAlignVertical: 'center',
+        fontSize: 24,
+        fontWeight: '200',
+        color: 'white',
+        paddingHorizontal: 10,
+        flex: 1
     }
 });
 
 export default GameModes;
-
-/*
-* <View
-                                style={{flex:1,flexDirection:'row',...styles.gameModeContainer,
-                                    marginHorizontal:2, borderWidth:2,borderColor:'#fff'}}>
-
-                                    <Image source={item.logo} style={{justifyContent:'flex-start',flex:1, width:null, height:null, resizeMode:'contain'}}/>
-
-
-                                <Text style={globalStyles.titleText}>{ item.category }</Text>
-                                <Text style={globalStyles.titleText}>{ item.category }</Text>
-                                <Text style={globalStyles.titleText}>{ item.category }</Text>
-                            </View>*/

@@ -91,7 +91,7 @@ class Home extends Component{
         return (
             <Container style={styles.container}>
 
-                <StatusBar backgroundColor="blue" barStyle={this.state.statusBarStyle[2]} />
+                <StatusBar backgroundColor="#273048" barStyle={this.state.statusBarStyle[2]} />
 
                 <View style={{flex:1}}>
                     <GameHeader />

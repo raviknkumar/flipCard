@@ -15,7 +15,7 @@ export const gameModes = [
     {key:3, category:SOCIAL_MEDIA, categoryDescription:'Social Media', logo:require('./../assets/socialMedia/SocialMediaFaceUp.jpg')},
     {key:4, category:CARTOONS, categoryDescription:'Cartoons', logo:require('./../assets/cartoons/CartoonCardFaceUp.jpg')},
     {key:5, category:FRUITS, categoryDescription:'Fruits', logo:require('../assets/fruits/FruitsCardFaceUp.png')},
-    {key:6, category: PLAYING_CARDS, categoryDescription:'Playing Cards', logo:require('./../assets/playingCards/PlayingCardDesign.png')},
+    {key:6, category: PLAYING_CARDS, categoryDescription:'Playing Cards', logo:require('./../assets/playingCards/PlayingCardDesign.jpg')},
     ];
 
 export const cardsInformation = {
@@ -68,7 +68,7 @@ export const cardsInformation = {
             {id:11,prop: require('./../assets/playingCards/QueenDiamond.png')},
             {id:12,prop: require('./../assets/playingCards/QueenSpade.png')},
         ],
-        faceUpImageUri: require('./../assets/playingCards/PlayingCardDesign.png')
+        faceUpImageUri: require('./../assets/playingCards/PlayingCardDesign.jpg')
     }, 
     [SOCIAL_MEDIA]: {
         cardInfo: [
@@ -91,7 +91,7 @@ export const cardsInformation = {
         cardInfo: [
             {id:1,prop: require('./../assets/cartoons/TomJerry.png')},
             {id:2,prop: require('../assets/cartoons/Doraemon.png')},
-            {id:3,prop: require('../assets/cartoons/Jerry.jpeg')},
+            {id:3,prop: require('../assets/cartoons/Jerry.png')},
             {id:4,prop: require('./../assets/cartoons/MickeyMouse.jpeg')},
             {id:5,prop: require('./../assets/cartoons/MotuPatlu.jpg')},
             {id:6,prop: require('./../assets/cartoons/ShinChan.png')},

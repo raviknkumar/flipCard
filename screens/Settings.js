@@ -21,7 +21,7 @@ const Settings = (props) => {
         let newSound = false;
         try {
             newSound = await toggleSound(soundValue);
-            console.log("Sound Set As", newSound);
+            //console.log("Sound Set As", newSound);
         } catch (e) {
             console.log("Error in Setting Sound", e);
         }

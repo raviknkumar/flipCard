@@ -61,5 +61,4 @@ export const globalStyles = StyleSheet.create({
     fontWeight: '200',
     color:'white'
   }
-
 });

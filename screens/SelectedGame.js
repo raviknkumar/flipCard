@@ -560,7 +560,7 @@ class SelectedGame extends Component
     };
 
     render() {
-        console.log("Is Muted ", this.state.isMuted);
+
         return (
                 <Container>
 

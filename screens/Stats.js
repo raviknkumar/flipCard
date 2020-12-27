@@ -115,7 +115,7 @@ const Stats = (props) => {
 
                 <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
 
-                    <Text style={{...styles.buttonText, marginLeft:10}}>Correct</Text>
+                    <Text style={{...styles.text, flex:.3, marginLeft:10, alignSelf:'center'}}>Correct</Text>
 
                         <Text style={{borderWidth: 3, borderRadius: 10,paddingHorizontal:5,
                             borderColor: '#73F440',...styles.buttonText}}>
@@ -123,7 +123,7 @@ const Stats = (props) => {
                         </Text>
 
 
-                    <Text style={{...styles.buttonText, marginLeft:10}}>Wrong</Text>
+                    <Text style={{...styles.text, marginLeft:10, flex:.3}}>Wrong</Text>
                     <Text style={{borderWidth: 3, borderRadius: 10, paddingHorizontal:5,
                         borderColor: '#ED3833',...styles.buttonText}}>
                         {obj.inCorrectSelections}
@@ -188,7 +188,6 @@ const Stats = (props) => {
             <View style={{flex:1, flexDirection:'column', alignItems:'center',justifyContent: 'space-around', marginHorizontal:10,}}>
                 {items()}
                 {/* fill space at the bottom*/}
-
             </View>
             </ScrollView>
 
@@ -224,6 +223,11 @@ const styles = StyleSheet.create({
         fontSize:18,
         fontWeight: '200',
         color:'white'
+    },
+    text: {
+        fontSize: 18,
+        fontWeight: '200',
+        color: 'white',
     }
 });
 

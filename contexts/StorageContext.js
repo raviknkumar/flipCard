@@ -11,7 +11,7 @@ const StorageContextProvider = (props) => {
     // SOUND
     const toggleSound = async (soundValue) => {
 
-        console.log("Toggle Sound", soundValue);
+        //console.log("Toggle Sound", soundValue);
         const key = 'sound';
         let resp = null;
         let sound= true;
@@ -34,7 +34,7 @@ const StorageContextProvider = (props) => {
 
     const getSound = async () => {
 
-        console.log("Get Sound");
+        //console.log("Get Sound");
         let key= 'sound';
         try{
             let sound = await AsyncStorage.getItem(key);
